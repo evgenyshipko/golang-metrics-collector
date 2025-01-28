@@ -14,7 +14,7 @@ type MetricData struct {
 }
 
 func IsNameMissed(path string) bool {
-	re := regexp.MustCompile(`^/update/(gauge|counter)/(-?\d+(\.\d+)?)$`)
+	re := regexp.MustCompile(`^/update/(gauge|counter)/(-?\d+(\.\d+)?)?$`)
 
 	matches := re.FindStringSubmatch(path)
 	return len(matches) > 0
