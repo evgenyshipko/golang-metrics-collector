@@ -1,0 +1,54 @@
+package parser
+
+import (
+	"errors"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/consts"
+	"regexp"
+	"strconv"
+)
+
+type MetricData struct {
+	MetricType string
+	Name       string
+	Value      interface{}
+}
+
+func IsNameMissed(path string) bool {
+	re := regexp.MustCompile(`^/update/(gauge|counter)/(-?\d+(\.\d+)?)$`)
+
+	matches := re.FindStringSubmatch(path)
+	if len(matches) > 0 {
+		return true
+	}
+	return false
+}
+
+func ParseUrlPath(path string) (MetricData, error) {
+
+	re := regexp.MustCompile(`^/update/(gauge|counter)/([^/]+)/(-?\d+(\.\d+)?)$`)
+
+	matches := re.FindStringSubmatch(path)
+	if len(matches) == 0 {
+		return MetricData{}, errors.New("Неверный формат URL")
+	}
+
+	metricType := matches[1]
+	metricName := matches[2]
+	metricValueStr := matches[3]
+
+	if metricType == consts.GAUGE {
+		floatVal, err := strconv.ParseFloat(metricValueStr, 64)
+		if err != nil {
+			return MetricData{}, errors.New("Неверное Value для gauge")
+		}
+		return MetricData{metricType, metricName, floatVal}, nil
+	} else if metricType == consts.COUNTER {
+		intVal, err := strconv.ParseInt(metricValueStr, 10, 64)
+		if err != nil {
+			return MetricData{}, errors.New("Неверное Value для counter")
+		}
+		return MetricData{metricType, metricName, intVal}, nil
+	}
+
+	return MetricData{}, errors.New("не может быть, но все же как-то программ до сюда дошла :D")
+}
