@@ -17,19 +17,16 @@ func IsNameMissed(path string) bool {
 	re := regexp.MustCompile(`^/update/(gauge|counter)/(-?\d+(\.\d+)?)$`)
 
 	matches := re.FindStringSubmatch(path)
-	if len(matches) > 0 {
-		return true
-	}
-	return false
+	return len(matches) > 0
 }
 
-func ParseUrlPath(path string) (MetricData, error) {
+func ParseURLPath(path string) (MetricData, error) {
 
 	re := regexp.MustCompile(`^/update/(gauge|counter)/([^/]+)/(-?\d+(\.\d+)?)$`)
 
 	matches := re.FindStringSubmatch(path)
 	if len(matches) == 0 {
-		return MetricData{}, errors.New("Неверный формат URL")
+		return MetricData{}, errors.New("неверный формат URL")
 	}
 
 	metricType := matches[1]
@@ -39,13 +36,13 @@ func ParseUrlPath(path string) (MetricData, error) {
 	if metricType == consts.GAUGE {
 		floatVal, err := strconv.ParseFloat(metricValueStr, 64)
 		if err != nil {
-			return MetricData{}, errors.New("Неверное Value для gauge")
+			return MetricData{}, errors.New("неверное Value для gauge")
 		}
 		return MetricData{metricType, metricName, floatVal}, nil
 	} else if metricType == consts.COUNTER {
 		intVal, err := strconv.ParseInt(metricValueStr, 10, 64)
 		if err != nil {
-			return MetricData{}, errors.New("Неверное Value для counter")
+			return MetricData{}, errors.New("неверное Value для counter")
 		}
 		return MetricData{metricType, metricName, intVal}, nil
 	}

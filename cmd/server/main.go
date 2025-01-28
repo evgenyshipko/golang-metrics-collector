@@ -21,7 +21,7 @@ func postMetric(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	data, err := parser.ParseUrlPath(req.URL.Path)
+	data, err := parser.ParseURLPath(req.URL.Path)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
