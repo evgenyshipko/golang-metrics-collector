@@ -2,7 +2,7 @@ package parser
 
 import (
 	"errors"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/consts"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/consts"
 	"regexp"
 	"strconv"
 )
@@ -47,5 +47,5 @@ func ParseURLPath(path string) (MetricData, error) {
 		return MetricData{metricType, metricName, intVal}, nil
 	}
 
-	return MetricData{}, errors.New("не может быть, но все же как-то программ до сюда дошла :D")
+	return MetricData{}, errors.New("не может быть, но все же как-то программа до сюда дошла :D")
 }
