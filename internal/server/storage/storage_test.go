@@ -9,7 +9,7 @@ import (
 
 func TestMemStorage_Set_MetricTypesCheck(t *testing.T) {
 	type args struct {
-		metricType string
+		metricType consts.Metric
 		name       string
 		value      interface{}
 	}
@@ -95,7 +95,7 @@ func TestMemStorage_Set_MetricTypesCheck(t *testing.T) {
 
 func TestMemStorage_Set_SaveMetricTwice(t *testing.T) {
 	type args struct {
-		metricType    string
+		metricType    consts.Metric
 		name          string
 		value         interface{}
 		expectedValue interface{}

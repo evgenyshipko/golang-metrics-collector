@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func SendMetric(metricType consts.Metrics, name string, value string) error {
+func SendMetric(metricType consts.Metric, name string, value string) error {
 	domain := "localhost:8080"
 	url := fmt.Sprintf("http://%s/update/%s/%s/%s", domain, metricType, name, value)
 

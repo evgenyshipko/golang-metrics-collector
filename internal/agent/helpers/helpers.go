@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-func GetMetricType(metricName string) consts.Metrics {
+func GetMetricType(metricName string) consts.Metric {
 	if metricName == "PollCount" {
 		return consts.COUNTER
 	}
