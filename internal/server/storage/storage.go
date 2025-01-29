@@ -29,7 +29,7 @@ func NewMemStorage() *MemStorage {
 Насколько правильно зашивать логику сохранения значения в зависимости от типа метрики в эту функцию?
 */
 
-func (storage *MemStorage) Set(metricType string, name string, value interface{}) error {
+func (storage *MemStorage) Set(metricType consts.Metrics, name string, value interface{}) error {
 
 	fmt.Println(metricType, name, value, reflect.TypeOf(value))
 

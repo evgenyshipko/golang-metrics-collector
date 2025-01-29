@@ -20,7 +20,7 @@ func TestMemStorage_Set_MetricTypesCheck(t *testing.T) {
 		expectedErrorMessage string
 	}{
 		{
-			name:    "Передаем метрику gauge cо значением float32 - ошибки нет",
+			name:    "Передаем метрику gauge cо значением float64 - ошибки нет",
 			wantErr: false,
 			args: args{
 				metricType: consts.GAUGE,
@@ -38,7 +38,7 @@ func TestMemStorage_Set_MetricTypesCheck(t *testing.T) {
 			},
 		},
 		{
-			name:                 "Передаем метрику counter cо значением float32 - ошибка",
+			name:                 "Передаем метрику counter cо значением float64 - ошибка",
 			wantErr:              true,
 			expectedErrorMessage: "float64 не конвертируется в int64",
 			args: args{
@@ -107,13 +107,13 @@ func TestMemStorage_Set_SaveMetricTwice(t *testing.T) {
 		expectedErrorMessage string
 	}{
 		{
-			name:    "Передаем метрику gauge cо значением float32 2 раза - значение остается таким же и имеет тип float64",
+			name:    "Передаем метрику gauge cо значением float64 2 раза - значение остается таким же и имеет тип float64",
 			wantErr: false,
 			args: args{
 				metricType:    consts.GAUGE,
 				name:          "name",
 				value:         111.1,
-				expectedValue: float64(111.1),
+				expectedValue: 111.1,
 			},
 		},
 		{

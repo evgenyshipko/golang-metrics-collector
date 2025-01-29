@@ -8,7 +8,7 @@ import (
 )
 
 type MetricData struct {
-	MetricType string
+	MetricType consts.Metrics
 	Name       string
 	Value      interface{}
 }
@@ -29,7 +29,7 @@ func ParseURLPath(path string) (MetricData, error) {
 		return MetricData{}, errors.New("неверный формат URL")
 	}
 
-	metricType := matches[1]
+	metricType := consts.Metrics(matches[1])
 	metricName := matches[2]
 	metricValueStr := matches[3]
 

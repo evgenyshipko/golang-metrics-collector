@@ -1,8 +1,10 @@
 package consts
 
+type Metrics string
+
 const (
-	GAUGE   = "gauge"
-	COUNTER = "counter"
+	GAUGE   Metrics = "gauge"
+	COUNTER Metrics = "counter"
 )
 
 type Gauge float64
