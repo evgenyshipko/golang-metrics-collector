@@ -24,7 +24,7 @@ func SendMetric(metricType consts.Metric, name string, value string) error {
 
 	defer resp.Body.Close()
 
-	fmt.Println("Метрики успешно отправлены", err)
+	fmt.Println("Метрики успешно отправлены")
 
 	return nil
 }
