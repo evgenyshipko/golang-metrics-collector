@@ -4,9 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/converter"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/logger"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/consts"
-	"reflect"
 )
 
 type MemStorage struct {
@@ -37,7 +35,7 @@ func (storage *MemStorage) Get(metricType consts.Metric, name string) interface{
 
 func (storage *MemStorage) Set(metricType consts.Metric, name string, value interface{}) error {
 
-	logger.Info(string(metricType), "name", name, "value", value, "type", reflect.TypeOf(value).String())
+	//logger.Info(string(metricType), "name", name, "value", value, "type", reflect.TypeOf(value).String())
 
 	key := getKey(metricType, name)
 

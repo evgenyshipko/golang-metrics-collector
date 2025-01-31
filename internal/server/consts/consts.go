@@ -10,10 +10,10 @@ const (
 type Gauge float64
 type Counter int64
 
-type UrlParam string
+type URLParam string
 
 const (
-	MetricType  UrlParam = "metricType"
-	MetricValue UrlParam = "metricValue"
-	MetricName  UrlParam = "metricName"
+	MetricType  URLParam = "metricType"
+	MetricValue URLParam = "metricValue"
+	MetricName  URLParam = "metricName"
 )

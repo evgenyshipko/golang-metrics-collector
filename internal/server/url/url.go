@@ -6,6 +6,6 @@ import (
 	"net/http"
 )
 
-func URLParam(r *http.Request, key consts.UrlParam) string {
+func MyURLParam(r *http.Request, key consts.URLParam) string {
 	return chi.URLParam(r, string(key))
 }

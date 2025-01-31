@@ -10,7 +10,7 @@ import (
 
 func ValidateMetricType(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		metricType := c.Metric(url.URLParam(r, c.MetricType))
+		metricType := c.Metric(url.MyURLParam(r, c.MetricType))
 		if metricType != c.COUNTER && metricType != c.GAUGE {
 			http.Error(w, "Неизвестный тип метрики", http.StatusBadRequest)
 			return
@@ -21,9 +21,9 @@ func ValidateMetricType(next http.Handler) http.Handler {
 
 func ValidateMetricValue(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		metricValue := url.URLParam(r, c.MetricValue)
+		metricValue := url.MyURLParam(r, c.MetricValue)
 
-		metricType := c.Metric(url.URLParam(r, c.MetricType))
+		metricType := c.Metric(url.MyURLParam(r, c.MetricType))
 
 		ctx := context.WithValue(r.Context(), c.MetricType, metricType)
 

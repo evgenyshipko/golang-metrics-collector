@@ -13,9 +13,11 @@ import (
 )
 
 func PostMetric(res http.ResponseWriter, req *http.Request) {
-	metricType := c.Metric(url.URLParam(req, c.MetricType))
-	name := url.URLParam(req, c.MetricName)
+	metricType := c.Metric(url.MyURLParam(req, c.MetricType))
+	name := url.MyURLParam(req, c.MetricName)
 	value := req.Context().Value(c.MetricValue)
+
+	logger.Info("PostMetric", "metricType", metricType, "name", name, "value", value)
 
 	err := storage.STORAGE.Set(metricType, name, value)
 	if err != nil {
@@ -24,15 +26,13 @@ func PostMetric(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	logger.Info("PostMetric", "Data after save", storage.STORAGE.GetAll())
-
 	res.Write([]byte("Метрика записана успешно!"))
 }
 
 // TODO: покрыть тестами GET-хендлер
 func GetMetric(res http.ResponseWriter, req *http.Request) {
-	metricType := c.Metric(url.URLParam(req, c.MetricType))
-	metricName := url.URLParam(req, c.MetricName)
+	metricType := c.Metric(url.MyURLParam(req, c.MetricType))
+	metricName := url.MyURLParam(req, c.MetricName)
 
 	value := storage.STORAGE.Get(metricType, metricName)
 	if value == nil {
@@ -44,6 +44,8 @@ func GetMetric(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusBadRequest)
 	}
+
+	logger.Info("GetMetric", "metricType", metricType, "name", metricName, "value", strVal)
 
 	res.Write([]byte(strVal))
 }
