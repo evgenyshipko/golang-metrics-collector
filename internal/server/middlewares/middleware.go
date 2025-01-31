@@ -3,14 +3,14 @@ package middlewares
 import (
 	"context"
 	c "github.com/evgenyshipko/golang-metrics-collector/internal/server/consts"
-	"github.com/go-chi/chi"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/url"
 	"net/http"
 	"strconv"
 )
 
 func ValidateMetricType(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		metricType := c.Metric(chi.URLParam(r, c.MetricType))
+		metricType := c.Metric(url.URLParam(r, c.MetricType))
 		if metricType != c.COUNTER && metricType != c.GAUGE {
 			http.Error(w, "Неизвестный тип метрики", http.StatusBadRequest)
 			return
@@ -19,15 +19,13 @@ func ValidateMetricType(next http.Handler) http.Handler {
 	})
 }
 
-type ContextValue string
-
 func ValidateMetricValue(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		metricValue := chi.URLParam(r, c.MetricValue)
+		metricValue := url.URLParam(r, c.MetricValue)
 
-		metricType := c.Metric(chi.URLParam(r, c.MetricType))
+		metricType := c.Metric(url.URLParam(r, c.MetricType))
 
-		ctx := context.WithValue(r.Context(), ContextValue(c.MetricType), metricType)
+		ctx := context.WithValue(r.Context(), c.MetricType, metricType)
 
 		if metricValue != "" {
 
@@ -38,7 +36,7 @@ func ValidateMetricValue(next http.Handler) http.Handler {
 					return
 				}
 
-				ctx = context.WithValue(r.Context(), ContextValue(c.MetricValue), float64Value)
+				ctx = context.WithValue(r.Context(), c.MetricValue, float64Value)
 
 			} else if metricType == c.COUNTER {
 				int64Value, err := strconv.ParseInt(metricValue, 10, 64)
@@ -47,7 +45,7 @@ func ValidateMetricValue(next http.Handler) http.Handler {
 					return
 				}
 
-				ctx = context.WithValue(r.Context(), ContextValue(c.MetricValue), int64Value)
+				ctx = context.WithValue(r.Context(), c.MetricValue, int64Value)
 
 			}
 		}

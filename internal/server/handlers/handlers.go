@@ -8,13 +8,13 @@ import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/logger"
 	c "github.com/evgenyshipko/golang-metrics-collector/internal/server/consts"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
-	"github.com/go-chi/chi"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/url"
 	"net/http"
 )
 
 func PostMetric(res http.ResponseWriter, req *http.Request) {
-	metricType := c.Metric(chi.URLParam(req, c.MetricType))
-	name := chi.URLParam(req, c.MetricName)
+	metricType := c.Metric(url.URLParam(req, c.MetricType))
+	name := url.URLParam(req, c.MetricName)
 	value := req.Context().Value(c.MetricValue)
 
 	err := storage.STORAGE.Set(metricType, name, value)
@@ -31,8 +31,8 @@ func PostMetric(res http.ResponseWriter, req *http.Request) {
 
 // TODO: покрыть тестами GET-хендлер
 func GetMetric(res http.ResponseWriter, req *http.Request) {
-	metricType := c.Metric(chi.URLParam(req, c.MetricType))
-	metricName := chi.URLParam(req, c.MetricName)
+	metricType := c.Metric(url.URLParam(req, c.MetricType))
+	metricName := url.URLParam(req, c.MetricName)
 
 	value := storage.STORAGE.Get(metricType, metricName)
 	if value == nil {
