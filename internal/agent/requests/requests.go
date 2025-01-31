@@ -7,8 +7,7 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
-func SendMetric(metricType consts.Metric, name string, value string) error {
-	domain := "localhost:8080"
+func SendMetric(domain string, metricType consts.Metric, name string, value string) error {
 	url := fmt.Sprintf("http://%s/update/%s/%s/%s", domain, metricType, name, value)
 
 	client := resty.New()

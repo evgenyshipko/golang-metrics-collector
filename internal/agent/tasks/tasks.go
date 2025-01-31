@@ -57,7 +57,7 @@ func CollectMetricsTask(interval time.Duration, metrics *map[string]interface{})
 	}
 }
 
-func SendMetricsTask(interval time.Duration, metrics *map[string]interface{}) {
+func SendMetricsTask(interval time.Duration, metrics *map[string]interface{}, host string) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
@@ -70,7 +70,7 @@ func SendMetricsTask(interval time.Duration, metrics *map[string]interface{}) {
 				continue
 			}
 
-			err = requests.SendMetric(helpers.GetMetricType(metricName), metricName, value)
+			err = requests.SendMetric(host, helpers.GetMetricType(metricName), metricName, value)
 			if err != nil {
 				logger.Error(fmt.Sprintf("SendMetricsTask %s", err))
 				continue
