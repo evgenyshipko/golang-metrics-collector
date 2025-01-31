@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/router"
 	"net/http"
 )
@@ -8,7 +9,10 @@ import (
 func main() {
 	r := router.MakeChiRouter()
 
-	err := http.ListenAndServe(`:8080`, r)
+	host := flag.String("a", "localhost:8080", "input host with port")
+	flag.Parse()
+
+	err := http.ListenAndServe(*host, r)
 	if err != nil {
 		panic(err)
 	}
