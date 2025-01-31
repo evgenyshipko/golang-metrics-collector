@@ -47,7 +47,7 @@ func (storage *MemStorage) Set(metricType consts.Metric, name string, value inte
 		}
 
 		if storage.data[key] != nil {
-			prevInt64Value, err := converter.ToInt64(value)
+			prevInt64Value, err := converter.ToInt64(storage.data[key])
 			if err != nil {
 				return fmt.Errorf("ошибка в Set, metricType: %s, %w", metricType, err)
 			}
