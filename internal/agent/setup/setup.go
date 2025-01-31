@@ -3,32 +3,56 @@ package setup
 import (
 	"flag"
 	"fmt"
-	"github.com/caarlos0/env"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/logger"
-	"github.com/joho/godotenv"
+	"os"
+	"strconv"
 )
 
-type ServerStartupValues struct {
-	Host string `env:"ADDRESS"`
+type AgentStartupValues struct {
+	Host           string `env:"ADDRESS"`
+	ReportInterval int    `env:"REPORT_INTERVAL"`
+	PollInterval   int    `env:"POLL_INTERVAL"`
 }
 
-func GetStartupValues() ServerStartupValues {
-	err := godotenv.Load()
-	if err != nil {
-		logger.Error(".env файл не найден, используются переменные cистемы")
-	}
+// TODO: функции стартапа в клиенте и сервере похожи. Вот тут бы заюзать мамгию DI, но пока сложно об этом думать
+func GetStartupValues() AgentStartupValues {
+	flagHost := flag.String("a", "localhost:8080", "metric server host")
 
-	host := flag.String("a", "localhost:8080", "input host with port")
+	flagReportInterval := flag.Int("r", 10, "interval between report metrics")
+
+	flagPollInterval := flag.Int("p", 2, "interval between polling metrics")
+
 	flag.Parse()
 
-	var cfg ServerStartupValues
-	err = env.Parse(&cfg)
-	if err != nil {
-		logger.Error("GetStartupValues: не удалось распарсить env-переменные", err)
+	var cfg AgentStartupValues
+
+	envHost, exists := os.LookupEnv("ADDRESS")
+	if exists {
+		cfg.Host = envHost
+	} else {
+		cfg.Host = *flagHost
 	}
 
-	if cfg.Host == "" {
-		cfg.Host = *host
+	envPollInterval, exists := os.LookupEnv("POLL_INTERVAL")
+	if exists {
+		val, err := strconv.Atoi(envPollInterval)
+		if err != nil {
+			logger.Error("Ошибка конвертации POLL_INTERVAL")
+		}
+		cfg.PollInterval = val
+	} else {
+		cfg.PollInterval = *flagPollInterval
+	}
+
+	envReportInterval, exists := os.LookupEnv("REPORT_INTERVAL")
+	if exists {
+		val, err := strconv.Atoi(envReportInterval)
+		if err != nil {
+			logger.Error("Ошибка конвертации REPORT_INTERVAL")
+		}
+		cfg.ReportInterval = val
+	} else {
+		cfg.ReportInterval = *flagReportInterval
 	}
 
 	logger.Info(fmt.Sprintf("Параметры запуска: %+v\n", cfg))
