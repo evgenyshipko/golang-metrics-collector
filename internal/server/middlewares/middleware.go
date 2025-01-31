@@ -2,7 +2,7 @@ package middlewares
 
 import (
 	"context"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/server/consts"
+	c "github.com/evgenyshipko/golang-metrics-collector/internal/server/consts"
 	"github.com/go-chi/chi"
 	"net/http"
 	"strconv"
@@ -10,8 +10,8 @@ import (
 
 func ValidateMetricType(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		metricType := consts.Metric(chi.URLParam(r, "metricType"))
-		if metricType != consts.COUNTER && metricType != consts.GAUGE {
+		metricType := c.Metric(chi.URLParam(r, c.METRIC_TYPE))
+		if metricType != c.COUNTER && metricType != c.GAUGE {
 			http.Error(w, "Неизвестный тип метрики", http.StatusBadRequest)
 			return
 		}
@@ -21,31 +21,31 @@ func ValidateMetricType(next http.Handler) http.Handler {
 
 func ValidateMetricValue(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		metricValue := chi.URLParam(r, "metricValue")
+		metricValue := chi.URLParam(r, c.METRIC_VALUE)
 
-		metricType := consts.Metric(chi.URLParam(r, "metricType"))
+		metricType := c.Metric(chi.URLParam(r, c.METRIC_TYPE))
 
-		ctx := context.WithValue(r.Context(), "metricType", metricType)
+		ctx := context.WithValue(r.Context(), c.METRIC_TYPE, metricType)
 
 		if metricValue != "" {
 
-			if metricType == consts.GAUGE {
+			if metricType == c.GAUGE {
 				float64Value, err := strconv.ParseFloat(metricValue, 64)
 				if err != nil {
 					http.Error(w, "неверное Value для gauge", http.StatusBadRequest)
 					return
 				}
 
-				ctx = context.WithValue(r.Context(), "metricValue", float64Value)
+				ctx = context.WithValue(r.Context(), c.METRIC_VALUE, float64Value)
 
-			} else if metricType == consts.COUNTER {
+			} else if metricType == c.COUNTER {
 				int64Value, err := strconv.ParseInt(metricValue, 10, 64)
 				if err != nil {
 					http.Error(w, "неверное Value для counter", http.StatusBadRequest)
 					return
 				}
 
-				ctx = context.WithValue(r.Context(), "metricValue", int64Value)
+				ctx = context.WithValue(r.Context(), c.METRIC_VALUE, int64Value)
 
 			}
 		}

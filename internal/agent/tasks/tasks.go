@@ -72,7 +72,7 @@ func SendMetricsTask(interval time.Duration, metrics *map[string]interface{}) {
 
 			err = requests.SendMetric(helpers.GetMetricType(metricName), metricName, value)
 			if err != nil {
-				logger.Error(fmt.Sprintf("SendMetricsTask", err))
+				logger.Error(fmt.Sprintf("SendMetricsTask %s", err))
 				continue
 			}
 		}

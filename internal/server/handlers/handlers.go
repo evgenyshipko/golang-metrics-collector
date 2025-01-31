@@ -6,16 +6,16 @@ import (
 	"fmt"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/converter"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/logger"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/server/consts"
+	c "github.com/evgenyshipko/golang-metrics-collector/internal/server/consts"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
 	"github.com/go-chi/chi"
 	"net/http"
 )
 
 func PostMetric(res http.ResponseWriter, req *http.Request) {
-	metricType := consts.Metric(chi.URLParam(req, "metricType"))
-	name := chi.URLParam(req, "metricName")
-	value := req.Context().Value("metricValue")
+	metricType := c.Metric(chi.URLParam(req, c.METRIC_TYPE))
+	name := chi.URLParam(req, c.METRIC_NAME)
+	value := req.Context().Value(c.METRIC_VALUE)
 
 	err := storage.STORAGE.Set(metricType, name, value)
 	if err != nil {
@@ -31,8 +31,8 @@ func PostMetric(res http.ResponseWriter, req *http.Request) {
 
 // TODO: покрыть тестами GET-хендлер
 func GetMetric(res http.ResponseWriter, req *http.Request) {
-	metricType := consts.Metric(chi.URLParam(req, "metricType"))
-	metricName := chi.URLParam(req, "metricName")
+	metricType := c.Metric(chi.URLParam(req, c.METRIC_TYPE))
+	metricName := chi.URLParam(req, c.METRIC_NAME)
 
 	value := storage.STORAGE.Get(metricType, metricName)
 	if value == nil {
@@ -48,14 +48,12 @@ func GetMetric(res http.ResponseWriter, req *http.Request) {
 	res.Write([]byte(strVal))
 }
 
-func NotFoundHandler(res http.ResponseWriter, req *http.Request) {
+func NotFoundHandler(res http.ResponseWriter, _ *http.Request) {
 	http.Error(res, "Запрашиваемый ресурс не найден", http.StatusNotFound)
-	return
 }
 
-func BadRequestHandler(res http.ResponseWriter, req *http.Request) {
+func BadRequestHandler(res http.ResponseWriter, _ *http.Request) {
 	http.Error(res, "URL не корректен", http.StatusBadRequest)
-	return
 }
 
 func ShowAllMetricsHandler(res http.ResponseWriter, req *http.Request) {
