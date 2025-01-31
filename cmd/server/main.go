@@ -1,15 +1,14 @@
 package main
 
 import (
-	"github.com/evgenyshipko/golang-metrics-collector/internal/server/handlers"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/router"
 	"net/http"
 )
 
 func main() {
-	mux := http.NewServeMux()
-	mux.HandleFunc(`/update/`, handlers.PostMetric)
+	r := router.MakeChiRouter()
 
-	err := http.ListenAndServe(`:8080`, mux)
+	err := http.ListenAndServe(`:8080`, r)
 	if err != nil {
 		panic(err)
 	}

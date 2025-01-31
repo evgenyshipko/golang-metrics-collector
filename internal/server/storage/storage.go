@@ -3,7 +3,8 @@ package storage
 import (
 	"errors"
 	"fmt"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/convert"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/converter"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/logger"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/consts"
 	"reflect"
 )
@@ -12,10 +13,11 @@ type MemStorage struct {
 	data map[string]interface{}
 }
 
+// TODO: это скорее MetricMemStorageInterface т.к. есть зависимость от имении метрики. Сделать упрощенный MemStorageInterface
 type MemStorageInterface[V comparable] interface {
-	Get(metricType string, name string) (V, error)
+	Get(metricType string, name string) V
 	Set(metricType string, name string, value V) error
-	Delete(metricType string, name string) error
+	GetAll() map[string]interface{}
 }
 
 func NewMemStorage() *MemStorage {
@@ -24,28 +26,32 @@ func NewMemStorage() *MemStorage {
 	}
 }
 
-/*
-ВОПРОС РЕВЬЮВЕРУ:
-Насколько правильно зашивать логику сохранения значения в зависимости от типа метрики в эту функцию?
-*/
+func getKey(metricType consts.Metric, metricName string) string {
+	return fmt.Sprintf(`%s_%s`, metricType, metricName)
+}
+
+func (storage *MemStorage) Get(metricType consts.Metric, name string) interface{} {
+	key := getKey(metricType, name)
+	return storage.data[key]
+}
 
 func (storage *MemStorage) Set(metricType consts.Metric, name string, value interface{}) error {
 
-	fmt.Println(metricType, name, value, reflect.TypeOf(value))
+	logger.Info(string(metricType), "name", name, "value", value, "type", reflect.TypeOf(value).String())
 
-	key := fmt.Sprintf(`%s_%s`, metricType, name)
+	key := getKey(metricType, name)
 
 	if metricType == consts.COUNTER {
 
-		int64Value, err := convert.ToInt64(value)
+		int64Value, err := converter.ToInt64(value)
 		if err != nil {
-			return err
+			return fmt.Errorf("ошибка в Set, metricType: %s, %w", metricType, err)
 		}
 
 		if storage.data[key] != nil {
-			prevInt64Value, err := convert.ToInt64(value)
+			prevInt64Value, err := converter.ToInt64(value)
 			if err != nil {
-				return err
+				return fmt.Errorf("ошибка в Set, metricType: %s, %w", metricType, err)
 			}
 			/* ВОПРОС РЕВЬЮВЕРУ:
 			Если типизировать следующим образом: storage.data[key].(consts.Counter) + value.(consts.Counter),
@@ -62,9 +68,9 @@ func (storage *MemStorage) Set(metricType consts.Metric, name string, value inte
 
 	if metricType == consts.GAUGE {
 
-		float64Value, err := convert.ToFloat64(value)
+		float64Value, err := converter.ToFloat64(value)
 		if err != nil {
-			return err
+			return fmt.Errorf("ошибка в Set, metricType: %s, %w", metricType, err)
 		}
 
 		storage.data[key] = float64Value
@@ -72,6 +78,10 @@ func (storage *MemStorage) Set(metricType consts.Metric, name string, value inte
 	}
 
 	return errors.New("неизвестный тип метрики")
+}
+
+func (storage *MemStorage) GetAll() map[string]interface{} {
+	return storage.data
 }
 
 var STORAGE = NewMemStorage()

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/tasks"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/logger"
 	"os"
 	"os/signal"
 	"syscall"
@@ -24,5 +24,5 @@ func main() {
 
 	// Даём время горутине завершиться
 	time.Sleep(1 * time.Second)
-	fmt.Println("Агент завершил работу")
+	logger.Info("Агент завершил работу")
 }

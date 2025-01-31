@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/helpers"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/requests"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/converter"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/logger"
 	"math/rand"
 	"runtime"
 	"time"
@@ -18,7 +20,7 @@ func CollectMetricsTask(interval time.Duration, metrics *map[string]interface{})
 	for range ticker.C {
 		var memStats runtime.MemStats
 		runtime.ReadMemStats(&memStats)
-		fmt.Println("Сбор и сохранение метрик")
+		logger.Info("Сбор и сохранение метрик")
 		PollCount++
 		*metrics = map[string]interface{}{
 			"Alloc":         memStats.Alloc,
@@ -51,7 +53,7 @@ func CollectMetricsTask(interval time.Duration, metrics *map[string]interface{})
 			"PollCount":     PollCount,
 			"RandomValue":   rand.Float64(),
 		}
-		fmt.Println("Данные", metrics)
+		logger.Info("CollectMetricsTask", "Данные", metrics)
 	}
 }
 
@@ -62,15 +64,15 @@ func SendMetricsTask(interval time.Duration, metrics *map[string]interface{}) {
 	for range ticker.C {
 		for metricName, metricValue := range *metrics {
 
-			value, err := helpers.ConvertMetricValueToString(metricName, metricValue)
+			value, err := converter.MetricValueToString(metricName, metricValue)
 			if err != nil {
-				fmt.Println("ERROR in ConvertMetricValueToString", err)
+				logger.Error(fmt.Sprintf("MetricValueToString %s", err))
 				continue
 			}
 
 			err = requests.SendMetric(helpers.GetMetricType(metricName), metricName, value)
 			if err != nil {
-				fmt.Println("ERROR in sendMetricsTask", err)
+				logger.Error(fmt.Sprintf("SendMetricsTask", err))
 				continue
 			}
 		}

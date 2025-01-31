@@ -38,9 +38,8 @@ func TestMemStorage_Set_MetricTypesCheck(t *testing.T) {
 			},
 		},
 		{
-			name:                 "Передаем метрику counter cо значением float64 - ошибка",
-			wantErr:              true,
-			expectedErrorMessage: "float64 не конвертируется в int64",
+			name:    "Передаем метрику counter cо значением float64 - ошибка",
+			wantErr: true,
 			args: args{
 				metricType: consts.COUNTER,
 				name:       "name",

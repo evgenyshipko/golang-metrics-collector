@@ -1,6 +1,11 @@
-package convert
+package converter
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/helpers"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/consts"
+	"strconv"
+)
 
 func ToInt64(value interface{}) (int64, error) {
 	switch v := value.(type) {
@@ -47,4 +52,26 @@ func ToFloat64(value interface{}) (float64, error) {
 	default:
 		return 0, fmt.Errorf("%T не конвертируется в float64", v)
 	}
+}
+
+// TODO: вынести metricType отдельным параметром
+func MetricValueToString(name string, value interface{}) (string, error) {
+	stringValue := ""
+	metricType := helpers.GetMetricType(name)
+	if metricType == consts.GAUGE {
+		float64val, err := ToFloat64(value)
+		if err != nil {
+			return "", fmt.Errorf("ошибка в MetricValueToString, metricType: %s, %w", metricType, err)
+		}
+		stringValue = strconv.FormatFloat(float64val, 'f', 6, 64)
+	}
+
+	if metricType == consts.COUNTER {
+		int64val, err := ToInt64(value)
+		if err != nil {
+			return "", fmt.Errorf("ошибка в MetricValueToString, metricType: %s, %w", metricType, err)
+		}
+		stringValue = strconv.FormatInt(int64val, 10)
+	}
+	return stringValue, nil
 }

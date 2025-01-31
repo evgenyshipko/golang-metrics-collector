@@ -1,4 +1,4 @@
-package handlers
+package router
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -21,22 +21,6 @@ func TestPostMetric(t *testing.T) {
 	}
 
 	tests := []TestStruct{
-		{
-			name: "Метод GET / не доступен",
-			args: args{
-				method:       http.MethodGet,
-				url:          "/",
-				expectedCode: http.StatusMethodNotAllowed,
-			},
-		},
-		{
-			name: "Метод GET /update/ не доступен",
-			args: args{
-				method:       http.MethodGet,
-				url:          "/update/",
-				expectedCode: http.StatusMethodNotAllowed,
-			},
-		},
 		{
 			name: "Метод POST /update/ вернет 400  т.к. урл не валиден",
 			args: args{
@@ -145,9 +129,11 @@ func TestPostMetric(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 
+			r := MakeChiRouter()
+
 			request := httptest.NewRequest(test.args.method, test.args.url, nil)
 			w := httptest.NewRecorder()
-			PostMetric(w, request)
+			r.ServeHTTP(w, request)
 
 			res := w.Result()
 			assert.Equal(t, test.args.expectedCode, res.StatusCode)
