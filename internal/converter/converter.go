@@ -63,7 +63,7 @@ func MetricValueToString(name string, value interface{}) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("ошибка в MetricValueToString, metricType: %s, %w", metricType, err)
 		}
-		stringValue = strconv.FormatFloat(float64val, 'f', 6, 64)
+		stringValue = strconv.FormatFloat(float64val, 'f', -1, 64)
 	}
 
 	if metricType == consts.COUNTER {

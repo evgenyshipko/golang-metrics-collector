@@ -13,9 +13,9 @@ import (
 )
 
 func PostMetric(res http.ResponseWriter, req *http.Request) {
-	metricType := c.Metric(chi.URLParam(req, c.METRIC_TYPE))
-	name := chi.URLParam(req, c.METRIC_NAME)
-	value := req.Context().Value(c.METRIC_VALUE)
+	metricType := c.Metric(chi.URLParam(req, c.MetricType))
+	name := chi.URLParam(req, c.MetricName)
+	value := req.Context().Value(c.MetricValue)
 
 	err := storage.STORAGE.Set(metricType, name, value)
 	if err != nil {
@@ -31,8 +31,8 @@ func PostMetric(res http.ResponseWriter, req *http.Request) {
 
 // TODO: покрыть тестами GET-хендлер
 func GetMetric(res http.ResponseWriter, req *http.Request) {
-	metricType := c.Metric(chi.URLParam(req, c.METRIC_TYPE))
-	metricName := chi.URLParam(req, c.METRIC_NAME)
+	metricType := c.Metric(chi.URLParam(req, c.MetricType))
+	metricName := chi.URLParam(req, c.MetricName)
 
 	value := storage.STORAGE.Get(metricType, metricName)
 	if value == nil {

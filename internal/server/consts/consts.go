@@ -11,7 +11,7 @@ type Gauge float64
 type Counter int64
 
 const (
-	METRIC_TYPE  string = "metricType"
-	METRIC_VALUE string = "metricValue"
-	METRIC_NAME  string = "metricName"
+	MetricType  string = "metricType"
+	MetricValue string = "metricValue"
+	MetricName  string = "metricName"
 )

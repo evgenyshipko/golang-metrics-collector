@@ -10,7 +10,7 @@ import (
 
 func ValidateMetricType(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		metricType := c.Metric(chi.URLParam(r, c.METRIC_TYPE))
+		metricType := c.Metric(chi.URLParam(r, c.MetricType))
 		if metricType != c.COUNTER && metricType != c.GAUGE {
 			http.Error(w, "Неизвестный тип метрики", http.StatusBadRequest)
 			return
@@ -19,13 +19,15 @@ func ValidateMetricType(next http.Handler) http.Handler {
 	})
 }
 
+type ContextValue string
+
 func ValidateMetricValue(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		metricValue := chi.URLParam(r, c.METRIC_VALUE)
+		metricValue := chi.URLParam(r, c.MetricValue)
 
-		metricType := c.Metric(chi.URLParam(r, c.METRIC_TYPE))
+		metricType := c.Metric(chi.URLParam(r, c.MetricType))
 
-		ctx := context.WithValue(r.Context(), c.METRIC_TYPE, metricType)
+		ctx := context.WithValue(r.Context(), ContextValue(c.MetricType), metricType)
 
 		if metricValue != "" {
 
@@ -36,7 +38,7 @@ func ValidateMetricValue(next http.Handler) http.Handler {
 					return
 				}
 
-				ctx = context.WithValue(r.Context(), c.METRIC_VALUE, float64Value)
+				ctx = context.WithValue(r.Context(), ContextValue(c.MetricValue), float64Value)
 
 			} else if metricType == c.COUNTER {
 				int64Value, err := strconv.ParseInt(metricValue, 10, 64)
@@ -45,7 +47,7 @@ func ValidateMetricValue(next http.Handler) http.Handler {
 					return
 				}
 
-				ctx = context.WithValue(r.Context(), c.METRIC_VALUE, int64Value)
+				ctx = context.WithValue(r.Context(), ContextValue(c.MetricValue), int64Value)
 
 			}
 		}
