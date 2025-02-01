@@ -2,8 +2,10 @@ package main
 
 import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/setup"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/storage"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/tasks"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/logger"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,16 +14,19 @@ import (
 
 func main() {
 
-	vars := setup.GetStartupValues()
+	vars, err := setup.GetStartupValues()
+	if err != nil {
+		log.Fatal("Аргументы не прошли валидацию", err)
+	}
 
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 
-	metrics := map[string]interface{}{}
+	metrics := storage.NewMetricStorage()
 
-	go tasks.CollectMetricsTask(time.Duration(vars.PollInterval)*time.Second, &metrics)
+	go tasks.CollectMetricsTask(vars.PollInterval, &metrics)
 
-	go tasks.SendMetricsTask(time.Duration(vars.ReportInterval)*time.Second, &metrics, vars.Host)
+	go tasks.SendMetricsTask(vars.ReportInterval, &metrics, vars.Host)
 
 	// Ожидаем сигнала завершения
 	<-signalChan

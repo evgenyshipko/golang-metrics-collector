@@ -2,8 +2,7 @@ package converter
 
 import (
 	"fmt"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/helpers"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/server/consts"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"strconv"
 )
 
@@ -22,7 +21,7 @@ func ToInt64(value interface{}) (int64, error) {
 	}
 }
 
-// при конвертации int64 и uint64 теряется точность
+// помнить, что при конвертации int64 и uint64 теряется точность
 func ToFloat64(value interface{}) (float64, error) {
 	switch v := value.(type) {
 	case int:
@@ -54,10 +53,8 @@ func ToFloat64(value interface{}) (float64, error) {
 	}
 }
 
-// TODO: вынести metricType отдельным параметром
-func MetricValueToString(name string, value interface{}) (string, error) {
+func MetricValueToString(metricType consts.Metric, value interface{}) (string, error) {
 	stringValue := ""
-	metricType := helpers.GetMetricType(name)
 	if metricType == consts.GAUGE {
 		float64val, err := ToFloat64(value)
 		if err != nil {

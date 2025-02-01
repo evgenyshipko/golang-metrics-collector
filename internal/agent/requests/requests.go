@@ -2,8 +2,8 @@ package requests
 
 import (
 	"fmt"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/logger"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/server/consts"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/go-resty/resty/v2"
 )
 

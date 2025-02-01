@@ -3,8 +3,8 @@ package storage
 import (
 	"errors"
 	"fmt"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/converter"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/server/consts"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/converter"
 )
 
 type MemStorage struct {

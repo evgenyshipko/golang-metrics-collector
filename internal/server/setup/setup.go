@@ -3,7 +3,7 @@ package setup
 import (
 	"flag"
 	"fmt"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/logger"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"os"
 )
 

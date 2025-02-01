@@ -1,21 +1,22 @@
 package setup
 
 import (
+	"errors"
 	"flag"
 	"fmt"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/logger"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"os"
 	"strconv"
+	"time"
 )
 
 type AgentStartupValues struct {
-	Host           string `env:"ADDRESS"`
-	ReportInterval int    `env:"REPORT_INTERVAL"`
-	PollInterval   int    `env:"POLL_INTERVAL"`
+	Host           string        `env:"ADDRESS"`
+	ReportInterval time.Duration `env:"REPORT_INTERVAL"`
+	PollInterval   time.Duration `env:"POLL_INTERVAL"`
 }
 
-// TODO: функции стартапа в клиенте и сервере похожи. Вот тут бы заюзать мамгию DI, но пока сложно об этом думать
-func GetStartupValues() AgentStartupValues {
+func GetStartupValues() (AgentStartupValues, error) {
 	flagHost := flag.String("a", "localhost:8080", "metric server host")
 
 	flagReportInterval := flag.Int("r", 10, "interval between report metrics")
@@ -33,29 +34,50 @@ func GetStartupValues() AgentStartupValues {
 		cfg.Host = *flagHost
 	}
 
-	envPollInterval, exists := os.LookupEnv("POLL_INTERVAL")
-	if exists {
-		val, err := strconv.Atoi(envPollInterval)
-		if err != nil {
-			logger.Error("Ошибка конвертации POLL_INTERVAL")
-		}
-		cfg.PollInterval = val
-	} else {
-		cfg.PollInterval = *flagPollInterval
+	pollInterval, err := getInterval("POLL_INTERVAL", flagPollInterval)
+	if err != nil {
+		return AgentStartupValues{}, fmt.Errorf("%w", err)
 	}
+	cfg.PollInterval = pollInterval
 
-	envReportInterval, exists := os.LookupEnv("REPORT_INTERVAL")
-	if exists {
-		val, err := strconv.Atoi(envReportInterval)
-		if err != nil {
-			logger.Error("Ошибка конвертации REPORT_INTERVAL")
-		}
-		cfg.ReportInterval = val
-	} else {
-		cfg.ReportInterval = *flagReportInterval
+	reportInterval, err := getInterval("REPORT_INTERVAL", flagReportInterval)
+	if err != nil {
+		return AgentStartupValues{}, fmt.Errorf("%w", err)
 	}
+	cfg.ReportInterval = reportInterval
 
 	logger.Info(fmt.Sprintf("Параметры запуска: %+v\n", cfg))
 
-	return cfg
+	return cfg, nil
+}
+
+func getInterval(envName string, flagVal *int) (time.Duration, error) {
+	envInterval, exists := os.LookupEnv(envName)
+	intInterval := 0
+	if exists {
+		val, err := strconv.Atoi(envInterval)
+		if err != nil {
+			logger.Error(fmt.Sprintf("ошибка конвертации енва %s, будем драть из флагов", envName))
+		}
+		intInterval = val
+	} else {
+		intInterval = *flagVal
+	}
+	err := validateInterval(intInterval)
+	if err != nil {
+		return 0, fmt.Errorf("%w", err)
+	}
+
+	return intToSeconds(intInterval), nil
+}
+
+func intToSeconds(num int) time.Duration {
+	return time.Duration(num) * time.Second
+}
+
+func validateInterval(num int) error {
+	if num <= 0 {
+		return errors.New("интервал должен быть положительным и больше нуля")
+	}
+	return nil
 }

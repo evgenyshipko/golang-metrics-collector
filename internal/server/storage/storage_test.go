@@ -2,7 +2,7 @@ package storage
 
 import (
 	"fmt"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/server/consts"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

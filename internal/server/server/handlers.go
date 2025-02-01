@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/converter"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/logger"
-	c "github.com/evgenyshipko/golang-metrics-collector/internal/server/consts"
+	c "github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/converter"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/url"
 	"net/http"
 )
@@ -39,7 +39,7 @@ func (s *Server) GetMetric(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	strVal, err := converter.MetricValueToString(metricName, value)
+	strVal, err := converter.MetricValueToString(metricType, value)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusBadRequest)
 	}

@@ -1,7 +1,7 @@
 package url
 
 import (
-	"github.com/evgenyshipko/golang-metrics-collector/internal/server/consts"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"github.com/go-chi/chi"
 	"net/http"
 )
