@@ -1,4 +1,4 @@
-package handlers
+package server
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -24,10 +24,13 @@ func TestBadRequestHandler(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+
+			s := Setup()
+
 			request := httptest.NewRequest(http.MethodGet, "/", nil)
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
-			BadRequestHandler(w, request)
+			s.BadRequestHandler(w, request)
 
 			res := w.Result()
 			// проверяем код ответа

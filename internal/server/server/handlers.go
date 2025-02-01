@@ -1,4 +1,4 @@
-package handlers
+package server
 
 import (
 	"encoding/json"
@@ -7,19 +7,18 @@ import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/converter"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/logger"
 	c "github.com/evgenyshipko/golang-metrics-collector/internal/server/consts"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/url"
 	"net/http"
 )
 
-func PostMetric(res http.ResponseWriter, req *http.Request) {
+func (s *Server) PostMetric(res http.ResponseWriter, req *http.Request) {
 	metricType := c.Metric(url.MyURLParam(req, c.MetricType))
 	name := url.MyURLParam(req, c.MetricName)
 	value := req.Context().Value(c.MetricValue)
 
 	logger.Info("PostMetric", "metricType", metricType, "name", name, "value", value)
 
-	err := storage.STORAGE.Set(metricType, name, value)
+	err := s.store.Set(metricType, name, value)
 	if err != nil {
 		logger.Error(fmt.Sprintf("PostMetric %s", errors.Unwrap(err)))
 		http.Error(res, err.Error(), http.StatusBadRequest)
@@ -30,11 +29,11 @@ func PostMetric(res http.ResponseWriter, req *http.Request) {
 }
 
 // TODO: покрыть тестами GET-хендлер
-func GetMetric(res http.ResponseWriter, req *http.Request) {
+func (s *Server) GetMetric(res http.ResponseWriter, req *http.Request) {
 	metricType := c.Metric(url.MyURLParam(req, c.MetricType))
 	metricName := url.MyURLParam(req, c.MetricName)
 
-	value := storage.STORAGE.Get(metricType, metricName)
+	value := s.store.Get(metricType, metricName)
 	if value == nil {
 		http.Error(res, "Метрики с таким именем нет в базе", http.StatusNotFound)
 		return
@@ -50,16 +49,16 @@ func GetMetric(res http.ResponseWriter, req *http.Request) {
 	res.Write([]byte(strVal))
 }
 
-func NotFoundHandler(res http.ResponseWriter, _ *http.Request) {
+func (s *Server) NotFoundHandler(res http.ResponseWriter, _ *http.Request) {
 	http.Error(res, "Запрашиваемый ресурс не найден", http.StatusNotFound)
 }
 
-func BadRequestHandler(res http.ResponseWriter, _ *http.Request) {
+func (s *Server) BadRequestHandler(res http.ResponseWriter, _ *http.Request) {
 	http.Error(res, "URL не корректен", http.StatusBadRequest)
 }
 
-func ShowAllMetricsHandler(res http.ResponseWriter, req *http.Request) {
-	jsonStorage, err := json.MarshalIndent(storage.STORAGE.GetAll(), "", "  ")
+func (s *Server) ShowAllMetricsHandler(res http.ResponseWriter, req *http.Request) {
+	jsonStorage, err := json.MarshalIndent(s.store.GetAll(), "", "  ")
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return

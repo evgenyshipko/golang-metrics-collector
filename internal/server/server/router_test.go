@@ -1,4 +1,4 @@
-package router
+package server
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -129,11 +129,11 @@ func TestPostMetric(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 
-			r := MakeChiRouter()
+			server := Setup()
 
 			request := httptest.NewRequest(test.args.method, test.args.url, nil)
 			w := httptest.NewRecorder()
-			r.ServeHTTP(w, request)
+			server.router.ServeHTTP(w, request)
 
 			res := w.Result()
 			assert.Equal(t, test.args.expectedCode, res.StatusCode)

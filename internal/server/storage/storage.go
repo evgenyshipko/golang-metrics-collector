@@ -11,7 +11,6 @@ type MemStorage struct {
 	data map[string]interface{}
 }
 
-// TODO: это скорее MetricMemStorageInterface т.к. есть зависимость от имении метрики. Сделать упрощенный MemStorageInterface
 type MemStorageInterface[V comparable] interface {
 	Get(metricType string, name string) V
 	Set(metricType string, name string, value V) error
@@ -51,12 +50,6 @@ func (storage *MemStorage) Set(metricType consts.Metric, name string, value inte
 			if err != nil {
 				return fmt.Errorf("ошибка в Set, metricType: %s, %w", metricType, err)
 			}
-			/* ВОПРОС РЕВЬЮВЕРУ:
-			Если типизировать следующим образом: storage.data[key].(consts.Counter) + value.(consts.Counter),
-			То получаем панику:  interface conversion: interface {} is int64, not consts.Counter
-			Хотя type Counter - это int64. Странная штуковина, я хочу обозвать именованным типом, а программа ругается.
-			Это ограничение языка или я что-то не так делаю?
-			*/
 			storage.data[key] = prevInt64Value + int64Value
 		} else {
 			storage.data[key] = int64Value
@@ -81,5 +74,3 @@ func (storage *MemStorage) Set(metricType consts.Metric, name string, value inte
 func (storage *MemStorage) GetAll() map[string]interface{} {
 	return storage.data
 }
-
-var STORAGE = NewMemStorage()
