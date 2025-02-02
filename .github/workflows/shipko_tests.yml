@@ -1,0 +1,29 @@
+name: Run Go Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.22  # Укажите нужную версию Go
+
+      - name: Download Dependencies
+        run: go mod tidy
+
+      - name: Run Tests
+        run: go test ./... -v
