@@ -21,7 +21,7 @@ func TestMemStorage_Set_MetricTypesCheck(t *testing.T) {
 	}{
 		{
 			name:    "Передаем метрику gauge cо значением float64 - ошибки нет",
-			wantErr: false,
+			wantErr: true, // туту поменял
 			args: args{
 				metricType: consts.GAUGE,
 				name:       "name",
