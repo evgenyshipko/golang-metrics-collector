@@ -19,7 +19,7 @@ func SendMetric(domain string, metricType consts.Metric, name string, value stri
 	}
 
 	if err != nil {
-		return fmt.Errorf("не удалось выполнить запрос: %w", err)
+		return fmt.Errorf("не удалось выполнить запрос: \n%w", err)
 	}
 
 	logger.Info("SendMetric Response", "url", url, "status", resp.Status(), "body", resp.Body())

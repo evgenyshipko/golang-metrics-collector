@@ -5,7 +5,6 @@ import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/storage"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/tasks"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -14,9 +13,13 @@ import (
 
 func main() {
 
+	log := logger.InitLogger()
+
+	defer log.Sync()
+
 	vars, err := setup.GetStartupValues()
 	if err != nil {
-		log.Fatal("Аргументы не прошли валидацию", err)
+		logger.Fatal("Аргументы не прошли валидацию", err)
 	}
 
 	signalChan := make(chan os.Signal, 1)
