@@ -22,7 +22,7 @@ func LoggingHandlers(h http.Handler) http.Handler {
 
 		duration := time.Since(start)
 
-		logger.Zlog.Infoln(
+		logger.Info(
 			"uri", r.RequestURI,
 			"method", r.Method,
 			"status", responseData.Status,

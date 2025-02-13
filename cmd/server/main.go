@@ -8,11 +8,11 @@ import (
 )
 
 func main() {
-	s := server.Setup()
-
 	log := logger.InitLogger()
 
 	defer log.Sync()
+
+	s := server.Setup()
 
 	values := setup.GetStartupValues()
 

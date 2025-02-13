@@ -9,7 +9,7 @@ import (
 )
 
 // FIXME: глобальная переменная. Подумать что можно с ней сделать.
-var Zlog *zap.SugaredLogger
+var zLog *zap.SugaredLogger
 
 const (
 	colorCyan = "\033[36m"
@@ -42,37 +42,37 @@ func InitLogger() *zap.Logger {
 	// Создаём логгер
 	logger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
 
-	Zlog = logger.Sugar()
+	zLog = logger.Sugar()
 	return logger
 }
 
 func Error(msg string, args ...any) {
 	checkLoggerInitialized()
-	Zlog.Errorln(msg, args)
+	zLog.Errorln(msg, args)
 }
 
 func Info(msg string, args ...any) {
 	checkLoggerInitialized()
-	Zlog.Infoln(msg, args)
+	zLog.Infoln(msg, args)
 }
 
 func Debug(msg string, args ...any) {
 	checkLoggerInitialized()
-	Zlog.Debugln(msg, args)
+	zLog.Debugln(msg, args)
 }
 
 func Warn(msg string, args ...any) {
 	checkLoggerInitialized()
-	Zlog.Warnln(msg, args)
+	zLog.Warnln(msg, args)
 }
 
 func Fatal(msg string, args ...any) {
 	checkLoggerInitialized()
-	Zlog.Fatalln(msg, args)
+	zLog.Fatalln(msg, args)
 }
 
 func checkLoggerInitialized() {
-	if Zlog == nil {
+	if zLog == nil {
 		panic("logger not initialized")
 	}
 }
