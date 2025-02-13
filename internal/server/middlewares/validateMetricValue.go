@@ -8,17 +8,6 @@ import (
 	"strconv"
 )
 
-func ValidateMetricType(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		metricType := c.Metric(url.MyURLParam(r, c.MetricType))
-		if metricType != c.COUNTER && metricType != c.GAUGE {
-			http.Error(w, "Неизвестный тип метрики", http.StatusBadRequest)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
 func ValidateMetricValue(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		metricValue := url.MyURLParam(r, c.MetricValue)

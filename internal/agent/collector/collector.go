@@ -3,7 +3,6 @@ package collector
 import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/storage"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"math/rand"
 	"runtime"
 )
@@ -49,6 +48,6 @@ func Create(metrics *storage.MetricStorage) func() {
 			"PollCount":     {Value: pollCount, Type: consts.COUNTER},
 			"RandomValue":   {Value: rand.Float64(), Type: consts.GAUGE},
 		}
-		logger.Info("CollectMetricsTask", "Данные", metrics)
+		//logger.Info("CollectMetricsTask", "Данные", metrics)
 	}
 }
