@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -29,7 +30,7 @@ func TestPostMetric(t *testing.T) {
 			name: "Метод POST /update/ вернет 400  т.к. body пустое",
 			args: args{
 				method:       http.MethodPost,
-				url:          "/update/gauge/",
+				url:          "/update/",
 				expectedCode: http.StatusBadRequest,
 				json:         "",
 			},
@@ -38,13 +39,13 @@ func TestPostMetric(t *testing.T) {
 			name: "Метод POST /update/ вернет 404  т.к. не указано имя метрики",
 			args: args{
 				method:       http.MethodPost,
-				url:          "/update/gauge/",
+				url:          "/update/",
 				expectedCode: http.StatusNotFound,
 				json:         "{}",
 			},
 		},
 		{
-			name: "Метод POST /update/ вернет 400  т.к. указан в MType указан неизвестный тип метрики",
+			name: "Метод POST /update/ вернет 400  т.к. указан в указан неизвестный тип метрики",
 			args: args{
 				method:       http.MethodPost,
 				url:          "/update/",
@@ -117,6 +118,43 @@ func TestPostMetric(t *testing.T) {
 				checkBody:    true,
 			},
 		},
+		// далее тестируем метод POST/ value
+		{
+			name: "Метод POST /value/ вернет 400  т.к. body пустое",
+			args: args{
+				method:       http.MethodPost,
+				url:          "/value/",
+				expectedCode: http.StatusBadRequest,
+				json:         "",
+			},
+		},
+		{
+			name: "Метод POST /value/ вернет 404  т.к. не указано имя метрики",
+			args: args{
+				method:       http.MethodPost,
+				url:          "/value/",
+				expectedCode: http.StatusNotFound,
+				json:         "{}",
+			},
+		},
+		{
+			name: "Метод POST /value/ вернет 400  т.к. указан в указан неизвестный тип метрики",
+			args: args{
+				method:       http.MethodPost,
+				url:          "/value/",
+				expectedCode: http.StatusBadRequest,
+				json:         `{"id": "privet", "type": "xxx"}`,
+			},
+		},
+		{
+			name: "Метод POST /value/ вернет 404 т.к. значения в базе нет",
+			args: args{
+				method:       http.MethodPost,
+				url:          "/value/",
+				expectedCode: http.StatusNotFound,
+				json:         `{"id": "privet", "type": "counter"}`,
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -138,6 +176,8 @@ func TestPostMetric(t *testing.T) {
 			}
 
 			responseString := string(body)
+
+			fmt.Println(responseString)
 
 			if test.args.checkBody {
 				assert.Equal(t, test.args.json, responseString)

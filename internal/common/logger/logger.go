@@ -8,7 +8,6 @@ import (
 	"time"
 )
 
-// FIXME: глобальная переменная. Подумать что можно с ней сделать.
 var Instance *zap.SugaredLogger
 
 const (

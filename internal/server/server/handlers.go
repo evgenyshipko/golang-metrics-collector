@@ -46,7 +46,6 @@ func (s *Server) StoreMetric(res http.ResponseWriter, req *http.Request) {
 	res.Write(bytes)
 }
 
-// TODO: покрыть тестами GET-хендлер
 func (s *Server) GetMetric(res http.ResponseWriter, req *http.Request) {
 	metricData, err := m.GetMetricData(req.Context())
 	if err != nil {
