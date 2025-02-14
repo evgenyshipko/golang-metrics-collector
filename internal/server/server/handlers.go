@@ -97,3 +97,11 @@ func (s *Server) ShowAllMetricsHandler(res http.ResponseWriter, req *http.Reques
 	data := fmt.Sprintf("<div>%s</div>", string(jsonStorage))
 	res.Write([]byte(data))
 }
+
+func (s *Server) NotFoundHandler(res http.ResponseWriter, _ *http.Request) {
+	http.Error(res, "Запрашиваемый ресурс не найден", http.StatusNotFound)
+}
+
+func (s *Server) BadRequestHandler(res http.ResponseWriter, _ *http.Request) {
+	http.Error(res, "URL не корректен", http.StatusBadRequest)
+}

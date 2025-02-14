@@ -27,6 +27,110 @@ func TestPostMetric(t *testing.T) {
 
 	tests := []TestStruct{
 		{
+			name: "Метод POST /update/ вернет 400  т.к. урл не валиден",
+			args: args{
+				method:       http.MethodPost,
+				url:          "/update/",
+				expectedCode: http.StatusBadRequest,
+			},
+		},
+		{
+			name: "Метод POST /update/dkdkd/ вернет 400  т.к. урл не валиден",
+			args: args{
+				method:       http.MethodPost,
+				url:          "/update/dkdkd/",
+				expectedCode: http.StatusBadRequest,
+			},
+		},
+		{
+			name: "Метод POST /update/azaza/dhdh/1221/2323 вернет 400  т.к. урл не валиден",
+			args: args{
+				method:       http.MethodPost,
+				url:          "/update/azaza/dhdh/1221/2323",
+				expectedCode: http.StatusBadRequest,
+			},
+		},
+		{
+			name: "Метод POST /update/gauge/ вернет 404  т.к. не указано имя и значение метрики",
+			args: args{
+				method:       http.MethodPost,
+				url:          "/update/gauge/",
+				expectedCode: http.StatusNotFound,
+			},
+		},
+		{
+			name: "Метод POST /update/counter/ вернет 404  т.к. не указано имя и значение метрики",
+			args: args{
+				method:       http.MethodPost,
+				url:          "/update/counter/",
+				expectedCode: http.StatusNotFound,
+			},
+		},
+		{
+			name: "Метод POST /update/gauge/111 вернет 404  т.к. не указано имя метрики",
+			args: args{
+				method:       http.MethodPost,
+				url:          "/update/gauge/111",
+				expectedCode: http.StatusNotFound,
+			},
+		},
+		{
+			name: "Метод POST /update/counter/111 вернет 404  т.к. не указано имя метрики",
+			args: args{
+				method:       http.MethodPost,
+				url:          "/update/counter/111",
+				expectedCode: http.StatusNotFound,
+			},
+		},
+		{
+			name: "Метод POST /update/counter/name/111 вернет 200 т.к. урл валиден",
+			args: args{
+				method:       http.MethodPost,
+				url:          "/update/counter/name/111",
+				expectedCode: http.StatusOK,
+			},
+		},
+		{
+			name: "Метод POST /update/counter/name/111.1 вернет 400 т.к. значение метрики counter не может быть типа float",
+			args: args{
+				method:       http.MethodPost,
+				url:          "/update/counter/name/111.1",
+				expectedCode: http.StatusBadRequest,
+			},
+		},
+		{
+			name: "Метод POST /update/counter/111/111 вернет 200 т.к. в качестве имени метрики может быть число",
+			args: args{
+				method:       http.MethodPost,
+				url:          "/update/counter/111/111",
+				expectedCode: http.StatusOK,
+			},
+		},
+		{
+			name: "Метод POST /update/gauge/name/111 вернет 200 т.к. урл валиден",
+			args: args{
+				method:       http.MethodPost,
+				url:          "/update/gauge/name/111",
+				expectedCode: http.StatusOK,
+			},
+		},
+		{
+			name: "Метод POST /update/gauge/name/111.1 вернет 200 т.к. метрика gauge поддерживает значения float",
+			args: args{
+				method:       http.MethodPost,
+				url:          "/update/gauge/name/111.1",
+				expectedCode: http.StatusOK,
+			},
+		},
+		{
+			name: "Метод POST /update/metric/name/111 вернет 400 т.к. у нас только два типа метрик - counter и gauge",
+			args: args{
+				method:       http.MethodPost,
+				url:          "/update/metric/name/111",
+				expectedCode: http.StatusBadRequest,
+			},
+		},
+		{
 			name: "Метод POST /update/ вернет 400  т.к. body пустое",
 			args: args{
 				method:       http.MethodPost,
