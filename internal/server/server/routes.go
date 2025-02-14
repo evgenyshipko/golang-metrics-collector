@@ -19,11 +19,11 @@ func (s *Server) routes() {
 		r.Post("/", s.StoreMetric)
 	})
 
-	s.router.With(m.ValidateMetricType).Route("/update/{metricType}", func(r chi.Router) {
+	s.router.With(m.ValidateTypeByURLParam).Route("/update/{metricType}", func(r chi.Router) {
 		r.Post("/", s.NotFoundHandler)
 
-		r.With(m.ValidateMetricValue).Post("/{metricValue}", s.NotFoundHandler)
+		r.With(m.ValidateValueByURLParam).Post("/{metricValue}", s.NotFoundHandler)
 
-		r.With(m.ValidateMetricValue).Post("/{metricName}/{metricValue}", s.PostMetricOld)
+		r.With(m.ValidateValueByURLParam).Post("/{metricName}/{metricValue}", s.PostMetricOld)
 	})
 }

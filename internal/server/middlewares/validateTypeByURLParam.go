@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func ValidateMetricType(next http.Handler) http.Handler {
+func ValidateTypeByURLParam(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		metricType := consts.Metric(url.MyURLParam(r, consts.MetricType))
 		if metricType != consts.COUNTER && metricType != consts.GAUGE {

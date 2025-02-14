@@ -8,7 +8,7 @@ import (
 	"strconv"
 )
 
-func ValidateMetricValue(next http.Handler) http.Handler {
+func ValidateValueByURLParam(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		metricValue := url.MyURLParam(r, c.MetricValue)
 
