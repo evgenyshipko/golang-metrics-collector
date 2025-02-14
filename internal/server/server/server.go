@@ -1,10 +1,10 @@
 package server
 
 import (
-	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares/logging"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
 	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 )
 
 type Server struct {
@@ -28,17 +28,11 @@ func (s *Server) Routes() *chi.Mux {
 func Setup() *Server {
 	router := chi.NewRouter()
 
+	router.Use(middleware.RequestID)
+
 	router.Use(logging.LoggingHandlers)
 
 	store := storage.NewMemStorage()
 	server := NewServer(router, store)
-	return server
-}
-
-func SetupTests() *Server {
-	logger.InitLogger()
-
-	server := Setup()
-
 	return server
 }

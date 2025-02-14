@@ -18,13 +18,13 @@ func SendMetricsTask(interval time.Duration, metrics *storage.MetricStorage, hos
 
 			value, err := converter.MetricValueToString(metricData.Type, metricData.Value)
 			if err != nil {
-				logger.Error(fmt.Sprintf("MetricValueToString %s", err))
+				logger.Instance.Warnw(fmt.Sprintf("MetricValueToString %s", err))
 				continue
 			}
 
 			err = requests.SendMetric(host, metricData.Type, metricName, value)
 			if err != nil {
-				logger.Error(fmt.Sprintf("SendMetricsTask %s", err))
+				logger.Instance.Warnw(fmt.Sprintf("SendMetricsTask %s", err))
 				continue
 			}
 		}

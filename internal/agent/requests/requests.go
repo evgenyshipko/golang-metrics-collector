@@ -14,7 +14,7 @@ func SendMetric(domain string, metricType consts.Metric, name string, value stri
 	resp, err := client.R().Post(url)
 
 	if resp.StatusCode() == 200 {
-		logger.Info("Метрики успешно отправлены")
+		logger.Instance.Info("Метрики успешно отправлены")
 		return nil
 	}
 
@@ -22,7 +22,7 @@ func SendMetric(domain string, metricType consts.Metric, name string, value stri
 		return fmt.Errorf("не удалось выполнить запрос: \n%w", err)
 	}
 
-	logger.Info("SendMetric Response", "url", url, "status", resp.Status(), "body", resp.Body())
+	logger.Instance.Infow("SendMetric Response", "url", url, "status", resp.Status(), "body", resp.Body())
 
 	return nil
 }

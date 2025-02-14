@@ -9,7 +9,7 @@ import (
 )
 
 // FIXME: глобальная переменная. Подумать что можно с ней сделать.
-var zLog *zap.SugaredLogger
+var Instance *zap.SugaredLogger
 
 const (
 	colorCyan = "\033[36m"
@@ -20,8 +20,10 @@ func colorTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 	enc.AppendString(coloredTime)
 }
 
-func InitLogger() *zap.Logger {
+var logger *zap.Logger
 
+// ЗАПОМНИТЬ! init вызывается при старте пакета, инициализируя логгер
+func init() {
 	encoderCfg := zapcore.EncoderConfig{
 		TimeKey:          "time",
 		LevelKey:         "level",
@@ -35,44 +37,17 @@ func InitLogger() *zap.Logger {
 		ConsoleSeparator: " | ",
 	}
 
-	// Создаём core с цветной консолью
 	consoleEncoder := zapcore.NewConsoleEncoder(encoderCfg)
+
 	core := zapcore.NewCore(consoleEncoder, zapcore.Lock(os.Stdout), zapcore.DebugLevel)
 
-	// Создаём логгер
-	logger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
+	logger = zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
 
-	zLog = logger.Sugar()
-	return logger
+	Instance = logger.Sugar()
 }
 
-func Error(msg string, args ...any) {
-	checkLoggerInitialized()
-	zLog.Errorln(msg, args)
-}
-
-func Info(msg string, args ...any) {
-	checkLoggerInitialized()
-	zLog.Infoln(msg, args)
-}
-
-func Debug(msg string, args ...any) {
-	checkLoggerInitialized()
-	zLog.Debugln(msg, args)
-}
-
-func Warn(msg string, args ...any) {
-	checkLoggerInitialized()
-	zLog.Warnln(msg, args)
-}
-
-func Fatal(msg string, args ...any) {
-	checkLoggerInitialized()
-	zLog.Fatalln(msg, args)
-}
-
-func checkLoggerInitialized() {
-	if zLog == nil {
-		panic("logger not initialized")
+func Sync() {
+	if logger != nil {
+		_ = logger.Sync()
 	}
 }

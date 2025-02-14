@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/converter"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
+	"reflect"
 )
 
 type MemStorage struct {
@@ -34,7 +36,7 @@ func (storage *MemStorage) Get(metricType consts.Metric, name string) interface{
 
 func (storage *MemStorage) Set(metricType consts.Metric, name string, value interface{}) error {
 
-	//logger.Info(string(metricType), "name", name, "value", value, "type", reflect.TypeOf(value).String())
+	logger.Instance.Debugw("MemStorage.Set", "type", metricType, "name", name, "value", value, "type", reflect.TypeOf(value).String())
 
 	key := getKey(metricType, name)
 

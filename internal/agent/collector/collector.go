@@ -48,6 +48,6 @@ func Create(metrics *storage.MetricStorage) func() {
 			"PollCount":     {Value: pollCount, Type: consts.COUNTER},
 			"RandomValue":   {Value: rand.Float64(), Type: consts.GAUGE},
 		}
-		//logger.Info("CollectMetricsTask", "Данные", metrics)
+		//logger.Instance.Info("CollectMetricsTask", "Данные", metrics)
 	}
 }

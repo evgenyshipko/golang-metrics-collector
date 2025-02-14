@@ -12,14 +12,11 @@ import (
 )
 
 func main() {
-
-	log := logger.InitLogger()
-
-	defer log.Sync()
+	defer logger.Sync()
 
 	vars, err := setup.GetStartupValues()
 	if err != nil {
-		logger.Fatal("Аргументы не прошли валидацию", err)
+		logger.Instance.Fatalw("Аргументы не прошли валидацию", err)
 	}
 
 	signalChan := make(chan os.Signal, 1)
@@ -36,5 +33,5 @@ func main() {
 
 	// Даём время горутине завершиться
 	time.Sleep(1 * time.Second)
-	logger.Info("Агент завершил работу")
+	logger.Instance.Info("Агент завершил работу")
 }

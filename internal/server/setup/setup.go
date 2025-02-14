@@ -2,7 +2,6 @@ package setup
 
 import (
 	"flag"
-	"fmt"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"os"
 )
@@ -24,7 +23,7 @@ func GetStartupValues() ServerStartupValues {
 		cfg.Host = *flagHost
 	}
 
-	logger.Info(fmt.Sprintf("Параметры запуска: %+v\n", cfg))
+	logger.Instance.Infow("Параметры запуска:", cfg)
 
 	return cfg
 }

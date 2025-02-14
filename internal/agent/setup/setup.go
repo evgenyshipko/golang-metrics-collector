@@ -46,7 +46,7 @@ func GetStartupValues() (AgentStartupValues, error) {
 	}
 	cfg.ReportInterval = reportInterval
 
-	logger.Info(fmt.Sprintf("Параметры запуска: %+v\n", cfg))
+	logger.Instance.Infow("Параметры запуска:", cfg)
 
 	return cfg, nil
 }
@@ -57,7 +57,7 @@ func getInterval(envName string, flagVal *int) (time.Duration, error) {
 	if exists {
 		val, err := strconv.Atoi(envInterval)
 		if err != nil {
-			logger.Error(fmt.Sprintf("ошибка конвертации енва %s, будем драть из флагов", envName))
+			logger.Instance.Warnw(fmt.Sprintf("ошибка конвертации енва %s, будем драть из флагов", envName))
 		}
 		intInterval = val
 	} else {

@@ -8,9 +8,7 @@ import (
 )
 
 func main() {
-	log := logger.InitLogger()
-
-	defer log.Sync()
+	defer logger.Sync()
 
 	s := server.Setup()
 
