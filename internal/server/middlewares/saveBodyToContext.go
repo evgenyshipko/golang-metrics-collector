@@ -10,6 +10,8 @@ import (
 	"net/http"
 )
 
+const metricDataKey = "metricData"
+
 func SaveBodyToContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 
@@ -27,14 +29,14 @@ func SaveBodyToContext(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(req.Context(), "metricData", metricData)
+		ctx := context.WithValue(req.Context(), metricDataKey, metricData)
 
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }
 
 func GetMetricData(ctx context.Context) (c.MetricData, error) {
-	metricData := ctx.Value("metricData")
+	metricData := ctx.Value(metricDataKey)
 
 	data, ok := metricData.(c.MetricData)
 	if !ok {

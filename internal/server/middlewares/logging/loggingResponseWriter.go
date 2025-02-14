@@ -8,10 +8,9 @@ import (
 type (
 	// берём структуру для хранения сведений об ответе
 	ResponseData struct {
-		Status   int
-		Size     int
-		Error    string // Здесь будет текст ошибки
-		BodyJson string
+		Status int
+		Size   int
+		Error  string // Здесь будет текст ошибки
 	}
 
 	// добавляем реализацию http.ResponseWriter
