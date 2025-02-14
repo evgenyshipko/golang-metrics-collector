@@ -10,7 +10,9 @@ import (
 	"net/http"
 )
 
-const metricDataKey = "metricData"
+type ContextKey string
+
+const metricDataKey ContextKey = "metricData"
 
 func SaveBodyToContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
@@ -41,7 +43,7 @@ func GetMetricData(ctx context.Context) (c.MetricData, error) {
 	data, ok := metricData.(c.MetricData)
 	if !ok {
 		logger.Instance.Warnw("Невозможно привести к MetricData")
-		return c.MetricData{}, errors.New("Невозможно привести к MetricData")
+		return c.MetricData{}, errors.New("невозможно привести к MetricData")
 	}
 	return data, nil
 }

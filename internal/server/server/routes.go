@@ -8,6 +8,7 @@ import (
 func (s *Server) routes() {
 	s.router.Get("/", s.ShowAllMetricsHandler)
 
+	// TODO: написать тесты на ручку
 	s.router.Get("/value/{metricType}/{metricName}", s.GetMetricOld)
 
 	s.router.With(m.SaveBodyToContext, m.ValidateName, m.ValidateType).Route("/value", func(r chi.Router) {

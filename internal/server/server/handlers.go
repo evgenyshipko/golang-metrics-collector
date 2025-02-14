@@ -49,6 +49,7 @@ func (s *Server) StoreMetric(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	res.Header().Set("Content-Type", "application/json")
 	res.Write(bytes)
 }
 
@@ -84,6 +85,7 @@ func (s *Server) GetMetric(res http.ResponseWriter, req *http.Request) {
 
 	logger.Instance.Infow("GetMetric", "metricType", metricType, "name", metricName, "value", value)
 
+	res.Header().Set("Content-Type", "application/json")
 	res.Write(bytes)
 }
 
