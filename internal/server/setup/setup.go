@@ -23,7 +23,7 @@ func GetStartupValues() ServerStartupValues {
 		cfg.Host = *flagHost
 	}
 
-	logger.Instance.Infow("Параметры запуска:", cfg)
+	logger.Instance.Infow("GetStartupValues", "Параметры запуска:", cfg)
 
 	return cfg
 }

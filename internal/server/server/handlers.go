@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	c "github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/converter"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	m "github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares"
 	"net/http"
@@ -34,11 +35,16 @@ func (s *Server) StoreMetric(res http.ResponseWriter, req *http.Request) {
 
 	newValue := s.store.Get(metricType, name)
 
-	responseData := generateMetricData(metricType, name, newValue)
+	responseData, err := converter.GenerateMetricData(metricType, name, newValue)
+	if err != nil {
+		logger.Instance.Warnw(fmt.Sprintf("GenerateMetricData %s", errors.Unwrap(err)))
+		http.Error(res, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	bytes, err := json.Marshal(responseData)
 	if err != nil {
-		logger.Instance.Warnw(fmt.Sprintf("StoreMetric %s", errors.Unwrap(err)))
+		logger.Instance.Warnw(fmt.Sprintf("Marshal %s", errors.Unwrap(err)))
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -62,11 +68,16 @@ func (s *Server) GetMetric(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	responseData := generateMetricData(metricType, metricName, value)
+	responseData, err := converter.GenerateMetricData(metricType, metricName, value)
+	if err != nil {
+		logger.Instance.Warnw(fmt.Sprintf("GenerateMetricData %s", errors.Unwrap(err)))
+		http.Error(res, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	bytes, err := json.Marshal(responseData)
 	if err != nil {
-		logger.Instance.Warnw(fmt.Sprintf("StoreMetric %s", errors.Unwrap(err)))
+		logger.Instance.Warnw(fmt.Sprintf("Marshal %s", errors.Unwrap(err)))
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -85,25 +96,4 @@ func (s *Server) ShowAllMetricsHandler(res http.ResponseWriter, req *http.Reques
 	logger.Instance.Infow("ShowAllMetricsHandler", "jsonStorage", string(jsonStorage))
 	data := fmt.Sprintf("<div>%s</div>", string(jsonStorage))
 	res.Write([]byte(data))
-}
-
-func generateMetricData(metricType c.Metric, name string, value interface{}) m.MetricData {
-	var GaugeValue *float64
-	var CounterValue *int64
-	if metricType == c.COUNTER {
-		if v, ok := value.(int64); ok {
-			CounterValue = &v
-		}
-	} else if metricType == c.GAUGE {
-		if v, ok := value.(float64); ok {
-			GaugeValue = &v
-		}
-	}
-
-	return m.MetricData{
-		ID:    name,
-		MType: metricType,
-		Value: GaugeValue,
-		Delta: CounterValue,
-	}
 }

@@ -72,3 +72,28 @@ func MetricValueToString(metricType consts.Metric, value interface{}) (string, e
 	}
 	return stringValue, nil
 }
+
+func GenerateMetricData(metricType consts.Metric, name string, value interface{}) (consts.MetricData, error) {
+	var GaugeValue *float64
+	var CounterValue *int64
+	if metricType == consts.COUNTER {
+		intVal, err := ToInt64(value)
+		if err != nil {
+			return consts.MetricData{}, err
+		}
+		CounterValue = &intVal
+	} else if metricType == consts.GAUGE {
+		floatVal, err := ToFloat64(value)
+		if err != nil {
+			return consts.MetricData{}, err
+		}
+		GaugeValue = &floatVal
+	}
+
+	return consts.MetricData{
+		ID:    name,
+		MType: metricType,
+		Value: GaugeValue,
+		Delta: CounterValue,
+	}, nil
+}

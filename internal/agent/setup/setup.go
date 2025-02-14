@@ -46,7 +46,7 @@ func GetStartupValues() (AgentStartupValues, error) {
 	}
 	cfg.ReportInterval = reportInterval
 
-	logger.Instance.Infow("Параметры запуска:", cfg)
+	logger.Instance.Infow("GetStartupValues", "Параметры запуска:", cfg)
 
 	return cfg, nil
 }

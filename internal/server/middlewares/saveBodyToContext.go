@@ -10,17 +10,10 @@ import (
 	"net/http"
 )
 
-type MetricData struct {
-	ID    string   `json:"id"`              // имя метрики
-	MType c.Metric `json:"type"`            // параметр, принимающий значение gauge или counter
-	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
-	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
-}
-
 func SaveBodyToContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 
-		var metricData MetricData
+		var metricData c.MetricData
 		var buf bytes.Buffer
 		_, err := buf.ReadFrom(req.Body)
 		if err != nil {
@@ -40,13 +33,13 @@ func SaveBodyToContext(next http.Handler) http.Handler {
 	})
 }
 
-func GetMetricData(ctx context.Context) (MetricData, error) {
+func GetMetricData(ctx context.Context) (c.MetricData, error) {
 	metricData := ctx.Value("metricData")
 
-	data, ok := metricData.(MetricData)
+	data, ok := metricData.(c.MetricData)
 	if !ok {
 		logger.Instance.Warnw("Невозможно привести к MetricData")
-		return MetricData{}, errors.New("Невозможно привести к MetricData")
+		return c.MetricData{}, errors.New("Невозможно привести к MetricData")
 	}
 	return data, nil
 }

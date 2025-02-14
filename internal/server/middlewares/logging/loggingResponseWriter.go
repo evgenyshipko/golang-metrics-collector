@@ -8,9 +8,10 @@ import (
 type (
 	// берём структуру для хранения сведений об ответе
 	ResponseData struct {
-		Status int
-		Size   int
-		Error  string // Здесь будет текст ошибки
+		Status   int
+		Size     int
+		Error    string // Здесь будет текст ошибки
+		BodyJson string
 	}
 
 	// добавляем реализацию http.ResponseWriter
@@ -38,6 +39,7 @@ func (r *LoggingResponseWriter) Write(b []byte) (int, error) {
 func (r *LoggingResponseWriter) WriteHeader(statusCode int) {
 	// записываем код статуса, используя оригинальный http.ResponseWriter
 	r.ResponseWriter.WriteHeader(statusCode)
+
 	r.ResponseData.Status = statusCode // захватываем код статуса
 	// Если статус ≥ 400, начинаем сохранять тело
 	if statusCode >= 400 {

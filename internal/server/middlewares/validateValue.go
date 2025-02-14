@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	c "github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"net/http"
 )
 
@@ -12,6 +13,8 @@ func ValidateValue(next http.Handler) http.Handler {
 			http.Error(res, err.Error(), http.StatusBadRequest)
 			return
 		}
+
+		logger.Instance.Debugw("ValidateValue", "metricData", metricData)
 
 		if (metricData.Delta != nil && metricData.Value != nil) || (metricData.Delta == nil && metricData.Value == nil) {
 			http.Error(res, "Value метрики может храниться либо в Delta либо в Value", http.StatusBadRequest)
