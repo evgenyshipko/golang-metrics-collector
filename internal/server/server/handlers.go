@@ -97,6 +97,7 @@ func (s *Server) ShowAllMetricsHandler(res http.ResponseWriter, req *http.Reques
 	}
 	logger.Instance.Infow("ShowAllMetricsHandler", "jsonStorage", string(jsonStorage))
 	data := fmt.Sprintf("<div>%s</div>", string(jsonStorage))
+	res.Header().Set("Content-Type", "text/html; charset=utf-8")
 	res.Write([]byte(data))
 }
 

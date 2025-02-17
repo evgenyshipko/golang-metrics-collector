@@ -38,7 +38,7 @@ func SendMetric(domain string, metricType consts.Metric, name string, value inte
 	resp, err := client.R().
 		SetBody(compressedBody).
 		SetHeader("Content-Encoding", "gzip").
-		//SetHeader("Content-Type", "application/json").
+		SetHeader("Content-Type", "application/json").
 		Post(url)
 
 	if resp.StatusCode() == 200 {
