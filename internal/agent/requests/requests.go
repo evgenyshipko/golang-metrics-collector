@@ -3,6 +3,7 @@ package requests
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/gzip"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/converter"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
@@ -17,29 +18,40 @@ func SendMetric(domain string, metricType consts.Metric, name string, value inte
 		return err
 	}
 
-	logger.Instance.Debug("SendMetric", "requestData", requestData)
-
 	body, err := json.Marshal(requestData)
 	if err != nil {
 		logger.Instance.Warnw("SendMetric json.Marshal err", err)
 		return err
 	}
 
+	compressedBody, err := gzip.Compress(body)
+	if err != nil {
+		logger.Instance.Warnw("SendMetric compress err", err)
+		return err
+	}
+
 	url := fmt.Sprintf("http://%s/update/", domain)
 
 	client := resty.New()
-	resp, err := client.R().SetBody(body).Post(url)
+
+	//ЗАПОМНИТЬ: resty автоматически добавляет заголовок "Accept-Encoding", "gzip" и распаковывает отвпет если он пришел в gzip
+	resp, err := client.R().
+		SetBody(compressedBody).
+		SetHeader("Content-Encoding", "gzip").
+		//SetHeader("Content-Type", "application/json").
+		Post(url)
 
 	if resp.StatusCode() == 200 {
 		logger.Instance.Info("Метрики успешно отправлены")
-		return nil
 	}
 
 	if err != nil {
 		logger.Instance.Errorf("не удалось выполнить запрос: \n%w", err)
 	}
 
-	logger.Instance.Infow("SendMetric Response", "url", url, "status", resp.Status(), "body", resp.Body())
+	respBody := resp.Body()
+
+	logger.Instance.Infow("SendMetric Response", "url", url, "status", resp.Status(), "body", respBody)
 
 	return nil
 }

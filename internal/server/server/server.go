@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares/logging"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
 	"github.com/go-chi/chi"
@@ -28,7 +29,12 @@ func (s *Server) Routes() *chi.Mux {
 func Setup() *Server {
 	router := chi.NewRouter()
 
+	// TODO: логгировать RequestId
 	router.Use(middleware.RequestID)
+
+	router.Use(middlewares.GzipDecompress)
+
+	router.Use(middlewares.GzipCompress)
 
 	router.Use(logging.LoggingHandlers)
 
