@@ -14,19 +14,19 @@ func SendMetric(domain string, metricType consts.Metric, name string, value inte
 
 	requestData, err := converter.GenerateMetricData(metricType, name, value)
 	if err != nil {
-		logger.Instance.Warnw("GenerateMetricData", err)
+		logger.Instance.Warnw("SendMetric", "GenerateMetricData", err)
 		return err
 	}
 
 	body, err := json.Marshal(requestData)
 	if err != nil {
-		logger.Instance.Warnw("SendMetric json.Marshal err", err)
+		logger.Instance.Warnw("SendMetric", "json.Marshal err", err)
 		return err
 	}
 
 	compressedBody, err := gzip.Compress(body)
 	if err != nil {
-		logger.Instance.Warnw("SendMetric compress err", err)
+		logger.Instance.Warnw("SendMetric", "compress err", err)
 		return err
 	}
 
@@ -46,7 +46,7 @@ func SendMetric(domain string, metricType consts.Metric, name string, value inte
 	}
 
 	if err != nil {
-		logger.Instance.Errorf("не удалось выполнить запрос: \n%w", err)
+		logger.Instance.Errorf("SendMetric", "не удалось выполнить запрос", err)
 	}
 
 	respBody := resp.Body()

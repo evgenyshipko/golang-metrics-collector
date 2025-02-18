@@ -1,7 +1,6 @@
 package tasks
 
 import (
-	"fmt"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/requests"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/storage"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
@@ -16,7 +15,7 @@ func SendMetricsTask(interval time.Duration, metrics *storage.MetricStorage, hos
 		for metricName, metricData := range *metrics {
 			err := requests.SendMetric(host, metricData.Type, metricName, metricData.Value)
 			if err != nil {
-				logger.Instance.Warnw(fmt.Sprintf("SendMetricsTask %s", err))
+				logger.Instance.Warnw("SendMetricsTask", "SendMetric", err)
 				continue
 			}
 		}

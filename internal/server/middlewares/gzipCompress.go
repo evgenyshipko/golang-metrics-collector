@@ -28,7 +28,7 @@ func GzipCompress(next http.Handler) http.Handler {
 
 		gz, err := gzip.NewWriterLevel(w, gzip.BestSpeed)
 		if err != nil {
-			logger.Instance.Warnw("Error creating gzip writer", "error", err)
+			logger.Instance.Warnw("GzipCompress", "Error creating gzip writer", err)
 			io.WriteString(w, err.Error())
 			return
 		}

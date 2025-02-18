@@ -20,7 +20,7 @@ func GetInterval(envName string, flagVal *int, validate ...bool) (time.Duration,
 	if exists {
 		val, err := strconv.Atoi(envInterval)
 		if err != nil {
-			logger.Instance.Warnw(fmt.Sprintf("ошибка конвертации енва %s, будем брать из флагов", envName))
+			logger.Instance.Warn(fmt.Sprintf("ошибка конвертации енва %s, будем брать из флагов", envName))
 		}
 		intInterval = val
 	} else {

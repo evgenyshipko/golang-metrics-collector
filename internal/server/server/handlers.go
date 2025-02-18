@@ -2,7 +2,6 @@ package server
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	c "github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/converter"
@@ -35,7 +34,7 @@ func (s *CustomServer) StoreMetricHandler(res http.ResponseWriter, req *http.Req
 	}
 
 	if err != nil {
-		logger.Instance.Warnw("err in setting metric", errors.Unwrap(err))
+		logger.Instance.Warnw("StoreMetricHandler", "err in setting metric", err)
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -44,14 +43,14 @@ func (s *CustomServer) StoreMetricHandler(res http.ResponseWriter, req *http.Req
 
 	responseData, err := converter.GenerateMetricData(metricType, name, newValue)
 	if err != nil {
-		logger.Instance.Warnw(fmt.Sprintf("GenerateMetricData %s", errors.Unwrap(err)))
+		logger.Instance.Warnw("StoreMetricHandler", "GenerateMetricData", err)
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	bytes, err := json.Marshal(responseData)
 	if err != nil {
-		logger.Instance.Warnw(fmt.Sprintf("Marshal %s", errors.Unwrap(err)))
+		logger.Instance.Warnw("StoreMetricHandler", "json.Marshal", err)
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -78,14 +77,14 @@ func (s *CustomServer) GetMetricDataHandler(res http.ResponseWriter, req *http.R
 
 	responseData, err := converter.GenerateMetricData(metricType, metricName, value)
 	if err != nil {
-		logger.Instance.Warnw(fmt.Sprintf("GenerateMetricData %s", errors.Unwrap(err)))
+		logger.Instance.Warnw("GetMetricDataHandler", "GenerateMetricData", err)
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	bytes, err := json.Marshal(responseData)
 	if err != nil {
-		logger.Instance.Warnw(fmt.Sprintf("Marshal %s", errors.Unwrap(err)))
+		logger.Instance.Warnw("GetMetricDataHandler", "json.Marshal", err)
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}

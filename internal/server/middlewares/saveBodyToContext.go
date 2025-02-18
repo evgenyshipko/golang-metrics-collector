@@ -44,7 +44,7 @@ func GetMetricData(ctx context.Context) (c.MetricData, error) {
 
 	data, ok := metricData.(c.MetricData)
 	if !ok {
-		logger.Instance.Warnw("Невозможно привести к MetricData")
+		logger.Instance.Warn("Невозможно привести к MetricData")
 		return c.MetricData{}, errors.New("невозможно привести к MetricData")
 	}
 	return data, nil
