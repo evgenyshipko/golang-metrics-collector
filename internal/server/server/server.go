@@ -62,6 +62,7 @@ func Create(config *setup.ServerStartupValues) *CustomServer {
 }
 
 func (s *CustomServer) Start() {
+	logger.Instance.Infow("SERVER STARTED!")
 	if err := s.ListenAndServe(); err != http.ErrServerClosed {
 		logger.Instance.Warnw("httpServer.ListenAndServe", "Ошибка запуска сервера", err)
 		panic(err)
