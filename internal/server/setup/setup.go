@@ -16,13 +16,16 @@ type ServerStartupValues struct {
 }
 
 func GetStartupValues() (ServerStartupValues, error) {
-	flagHost := flag.String("a", "localhost:8080", "input host with port")
 
-	flagStoreInterval := flag.Int("i", 300, "interval between saving metrics to file")
+	flagSet := flag.NewFlagSet("config", flag.ContinueOnError)
 
-	flagFileStoragePath := flag.String("f", "./temp.json", "temp file to store metrics")
+	flagHost := flagSet.String("a", "localhost:8080", "input host with port")
 
-	flagRestore := flag.Bool("r", true, "restore saved metrics from file or not")
+	flagStoreInterval := flagSet.Int("i", 300, "interval between saving metrics to file")
+
+	flagFileStoragePath := flagSet.String("f", "./temp.json", "temp file to store metrics")
+
+	flagRestore := flagSet.Bool("r", true, "restore saved metrics from file or not")
 
 	flag.Parse()
 
