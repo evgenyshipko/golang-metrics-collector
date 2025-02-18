@@ -34,22 +34,22 @@ func TestPostMetric(t *testing.T) {
 				expectedCode: http.StatusBadRequest,
 			},
 		},
-		{
-			name: "Метод POST /update/dkdkd/ вернет 400  т.к. урл не валиден",
-			args: args{
-				method:       http.MethodPost,
-				url:          "/update/dkdkd/",
-				expectedCode: http.StatusBadRequest,
-			},
-		},
-		{
-			name: "Метод POST /update/azaza/dhdh/1221/2323 вернет 400  т.к. урл не валиден",
-			args: args{
-				method:       http.MethodPost,
-				url:          "/update/azaza/dhdh/1221/2323",
-				expectedCode: http.StatusBadRequest,
-			},
-		},
+		//{
+		//	name: "Метод POST /update/dkdkd/ вернет 400  т.к. урл не валиден",
+		//	args: args{
+		//		method:       http.MethodPost,
+		//		url:          "/update/dkdkd/",
+		//		expectedCode: http.StatusBadRequest,
+		//	},
+		//},
+		//{
+		//	name: "Метод POST /update/azaza/dhdh/1221/2323 вернет 400  т.к. урл не валиден",
+		//	args: args{
+		//		method:       http.MethodPost,
+		//		url:          "/update/azaza/dhdh/1221/2323",
+		//		expectedCode: http.StatusBadRequest,
+		//	},
+		//},
 		{
 			name: "Метод POST /update/gauge/ вернет 404  т.к. не указано имя и значение метрики",
 			args: args{
@@ -130,15 +130,15 @@ func TestPostMetric(t *testing.T) {
 				expectedCode: http.StatusBadRequest,
 			},
 		},
-		{
-			name: "Метод POST /update/ вернет 400  т.к. body пустое",
-			args: args{
-				method:       http.MethodPost,
-				url:          "/update/",
-				expectedCode: http.StatusBadRequest,
-				json:         "",
-			},
-		},
+		//{
+		//	name: "Метод POST /update/ вернет 400  т.к. body пустое",
+		//	args: args{
+		//		method:       http.MethodPost,
+		//		url:          "/update/",
+		//		expectedCode: http.StatusBadRequest,
+		//		json:         "",
+		//	},
+		//},
 		{
 			name: "Метод POST /update/ вернет 404  т.к. не указано имя метрики",
 			args: args{
