@@ -13,7 +13,7 @@ import (
 func main() {
 	defer logger.Sync()
 
-	values, err := setup.GetStartupValues()
+	values, err := setup.GetStartupValues(os.Args[1:])
 	if err != nil {
 		logger.Instance.Fatalw("Аргументы не прошли валидацию", err)
 	}

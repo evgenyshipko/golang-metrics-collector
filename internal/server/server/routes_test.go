@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 )
@@ -287,7 +288,7 @@ func TestPostMetric(t *testing.T) {
 		},
 	}
 
-	values, err := setup.GetStartupValues()
+	values, err := setup.GetStartupValues(os.Args[1:])
 	if err != nil {
 		logger.Instance.Fatalw("Аргументы не прошли валидацию", err)
 	}

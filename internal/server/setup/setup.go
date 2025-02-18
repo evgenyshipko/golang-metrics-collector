@@ -15,7 +15,7 @@ type ServerStartupValues struct {
 	Restore         bool          `env:"RESTORE"`
 }
 
-func GetStartupValues() (ServerStartupValues, error) {
+func GetStartupValues(args []string) (ServerStartupValues, error) {
 
 	flagSet := flag.NewFlagSet("config", flag.ContinueOnError)
 
@@ -27,7 +27,12 @@ func GetStartupValues() (ServerStartupValues, error) {
 
 	flagRestore := flagSet.Bool("r", true, "restore saved metrics from file or not")
 
-	flag.Parse()
+	// Парсим переданные аргументы
+	if err := flagSet.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			return ServerStartupValues{}, err
+		}
+	}
 
 	var cfg ServerStartupValues
 

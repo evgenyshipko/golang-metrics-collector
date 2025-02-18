@@ -82,17 +82,3 @@ func (storage *MemStorage) GetAll() *MemStorageData {
 func (storage *MemStorage) SetData(data MemStorageData) {
 	storage.data = data
 }
-
-//func (storage *MemStorage) FillFromFile(filename string) {
-//	consumer, err := files.NewConsumer(filename)
-//	if err != nil {
-//		logger.Instance.Warnw("FillFromFile", "NewConsumer", err)
-//		return
-//	}
-//	memStorageData, err := consumer.ReadData()
-//	if err != nil {
-//		logger.Instance.Warnw("FillFromFile", "consumer.ReadData", err)
-//		return
-//	}
-//	storage.data = *memStorageData
-//}
