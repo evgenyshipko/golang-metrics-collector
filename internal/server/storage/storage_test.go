@@ -78,7 +78,7 @@ func TestMemStorage_Set_MetricTypesCheck(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			storage := &MemStorage{
-				data: make(map[string]interface{}),
+				data: make(MemStorageData),
 			}
 			err := storage.Set(tt.args.metricType, tt.args.name, tt.args.value)
 			fmt.Println("err", err, "tt.wantErr", tt.wantErr)
@@ -130,7 +130,7 @@ func TestMemStorage_Set_SaveMetricTwice(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			storage := &MemStorage{
-				data: make(map[string]interface{}),
+				data: make(MemStorageData),
 			}
 			err := storage.Set(tt.args.metricType, tt.args.name, tt.args.value)
 			if (err != nil) != tt.wantErr {

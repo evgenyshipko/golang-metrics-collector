@@ -1,6 +1,8 @@
 package server
 
 import (
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/setup"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -25,7 +27,12 @@ func TestBadRequestHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			s := Setup()
+			values, err := setup.GetStartupValues()
+			if err != nil {
+				logger.Instance.Fatalw("Аргументы не прошли валидацию", err)
+			}
+
+			s := Create(&values)
 
 			request := httptest.NewRequest(http.MethodGet, "/", nil)
 			// создаём новый Recorder

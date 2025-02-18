@@ -2,6 +2,8 @@ package server
 
 import (
 	"fmt"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/setup"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -284,10 +286,16 @@ func TestPostMetric(t *testing.T) {
 			},
 		},
 	}
+
+	values, err := setup.GetStartupValues()
+	if err != nil {
+		logger.Instance.Fatalw("Аргументы не прошли валидацию", err)
+	}
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 
-			server := Setup()
+			server := Create(&values)
 
 			request := httptest.NewRequest(test.args.method, test.args.url, strings.NewReader(test.args.json))
 			w := httptest.NewRecorder()

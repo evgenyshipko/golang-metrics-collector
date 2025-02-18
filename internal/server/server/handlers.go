@@ -7,11 +7,12 @@ import (
 	c "github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/converter"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/files"
 	m "github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares"
 	"net/http"
 )
 
-func (s *Server) StoreMetricHandler(res http.ResponseWriter, req *http.Request) {
+func (s *CustomServer) StoreMetricHandler(res http.ResponseWriter, req *http.Request) {
 	metricData, err := m.GetMetricData(req.Context())
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusBadRequest)
@@ -25,6 +26,12 @@ func (s *Server) StoreMetricHandler(res http.ResponseWriter, req *http.Request) 
 		err = s.store.Set(metricType, name, *metricData.Value)
 	} else if metricType == c.COUNTER {
 		err = s.store.Set(metricType, name, *metricData.Delta)
+	}
+
+	if s.config.StoreInterval == 0 {
+		filePath := s.config.FileStoragePath
+		storeData := s.store.GetAll()
+		files.WriteToFile(filePath, storeData)
 	}
 
 	if err != nil {
@@ -53,7 +60,7 @@ func (s *Server) StoreMetricHandler(res http.ResponseWriter, req *http.Request) 
 	res.Write(bytes)
 }
 
-func (s *Server) GetMetricDataHandler(res http.ResponseWriter, req *http.Request) {
+func (s *CustomServer) GetMetricDataHandler(res http.ResponseWriter, req *http.Request) {
 	metricData, err := m.GetMetricData(req.Context())
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusBadRequest)
@@ -89,7 +96,7 @@ func (s *Server) GetMetricDataHandler(res http.ResponseWriter, req *http.Request
 	res.Write(bytes)
 }
 
-func (s *Server) GetMetricValueHandler(res http.ResponseWriter, req *http.Request) {
+func (s *CustomServer) GetMetricValueHandler(res http.ResponseWriter, req *http.Request) {
 	metricData, err := m.GetMetricData(req.Context())
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusBadRequest)
@@ -115,8 +122,8 @@ func (s *Server) GetMetricValueHandler(res http.ResponseWriter, req *http.Reques
 	res.Write([]byte(strVal))
 }
 
-func (s *Server) ShowAllMetricsHandler(res http.ResponseWriter, req *http.Request) {
-	jsonStorage, err := json.MarshalIndent(s.store.GetAll(), "", "  ")
+func (s *CustomServer) ShowAllMetricsHandler(res http.ResponseWriter, req *http.Request) {
+	jsonStorage, err := json.MarshalIndent(*s.store.GetAll(), "", "  ")
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
@@ -127,10 +134,10 @@ func (s *Server) ShowAllMetricsHandler(res http.ResponseWriter, req *http.Reques
 	res.Write([]byte(data))
 }
 
-func (s *Server) NotFoundHandler(res http.ResponseWriter, _ *http.Request) {
+func (s *CustomServer) NotFoundHandler(res http.ResponseWriter, _ *http.Request) {
 	http.Error(res, "Запрашиваемый ресурс не найден", http.StatusNotFound)
 }
 
-func (s *Server) BadRequestHandler(res http.ResponseWriter, _ *http.Request) {
+func (s *CustomServer) BadRequestHandler(res http.ResponseWriter, _ *http.Request) {
 	http.Error(res, "URL не корректен", http.StatusBadRequest)
 }

@@ -5,7 +5,7 @@ import (
 	"github.com/go-chi/chi"
 )
 
-func (s *Server) routes() {
+func (s *CustomServer) routes() {
 	s.router.Get("/", s.ShowAllMetricsHandler)
 
 	s.router.Route("/value", func(r chi.Router) {

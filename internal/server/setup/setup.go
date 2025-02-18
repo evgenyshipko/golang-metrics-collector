@@ -34,7 +34,7 @@ func GetStartupValues() (ServerStartupValues, error) {
 
 	cfg.Restore = setup.GetBoolVariable("RESTORE", flagRestore)
 
-	storeInterval, err := setup.GetInterval("STORE_INTERVAL", flagStoreInterval)
+	storeInterval, err := setup.GetInterval("STORE_INTERVAL", flagStoreInterval, false)
 	if err != nil {
 		return ServerStartupValues{}, fmt.Errorf("%w", err)
 	}

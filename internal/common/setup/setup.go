@@ -9,7 +9,12 @@ import (
 	"time"
 )
 
-func GetInterval(envName string, flagVal *int) (time.Duration, error) {
+func GetInterval(envName string, flagVal *int, validate ...bool) (time.Duration, error) {
+	validateZero := true
+	if len(validate) > 0 {
+		validateZero = validate[0]
+	}
+
 	envInterval, exists := os.LookupEnv(envName)
 	intInterval := 0
 	if exists {
@@ -21,7 +26,7 @@ func GetInterval(envName string, flagVal *int) (time.Duration, error) {
 	} else {
 		intInterval = *flagVal
 	}
-	err := validateInterval(intInterval)
+	err := validateInterval(intInterval, validateZero)
 	if err != nil {
 		return 0, fmt.Errorf("%w", err)
 	}
@@ -33,9 +38,12 @@ func intToSeconds(num int) time.Duration {
 	return time.Duration(num) * time.Second
 }
 
-func validateInterval(num int) error {
-	if num <= 0 {
+func validateInterval(num int, validateZero bool) error {
+	if validateZero && num <= 0 {
 		return errors.New("интервал должен быть положительным и больше нуля")
+	}
+	if !validateZero && num < 0 {
+		return errors.New("интервал должен быть положительным")
 	}
 	return nil
 }

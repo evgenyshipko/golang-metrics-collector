@@ -4,21 +4,30 @@ import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/server"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/setup"
-	"net/http"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/tasks"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
 	defer logger.Sync()
-
-	s := server.Setup()
 
 	values, err := setup.GetStartupValues()
 	if err != nil {
 		logger.Instance.Fatalw("Аргументы не прошли валидацию", err)
 	}
 
-	err = http.ListenAndServe(values.Host, s.Routes())
-	if err != nil {
-		panic(err)
-	}
+	customServer := server.Create(&values)
+
+	stopSignal := make(chan os.Signal, 1)
+	signal.Notify(stopSignal, syscall.SIGINT, syscall.SIGTERM)
+
+	go customServer.Start()
+
+	go tasks.WriteMetricsToFileTask(values.StoreInterval, values.FileStoragePath, customServer.GetStoreData())
+
+	<-stopSignal
+
+	customServer.ShutDown()
 }

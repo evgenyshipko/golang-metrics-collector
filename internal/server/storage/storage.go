@@ -9,19 +9,21 @@ import (
 	"reflect"
 )
 
+type MemStorageData map[string]interface{}
+
 type MemStorage struct {
-	data map[string]interface{}
+	data MemStorageData
 }
 
 type MemStorageInterface[V comparable] interface {
 	Get(metricType string, name string) V
 	Set(metricType string, name string, value V) error
-	GetAll() map[string]interface{}
+	GetAll() MemStorageData
 }
 
 func NewMemStorage() *MemStorage {
 	return &MemStorage{
-		data: make(map[string]interface{}),
+		data: make(MemStorageData),
 	}
 }
 
@@ -73,6 +75,24 @@ func (storage *MemStorage) Set(metricType consts.Metric, name string, value inte
 	return errors.New("неизвестный тип метрики")
 }
 
-func (storage *MemStorage) GetAll() map[string]interface{} {
-	return storage.data
+func (storage *MemStorage) GetAll() *MemStorageData {
+	return &storage.data
 }
+
+func (storage *MemStorage) SetData(data MemStorageData) {
+	storage.data = data
+}
+
+//func (storage *MemStorage) FillFromFile(filename string) {
+//	consumer, err := files.NewConsumer(filename)
+//	if err != nil {
+//		logger.Instance.Warnw("FillFromFile", "NewConsumer", err)
+//		return
+//	}
+//	memStorageData, err := consumer.ReadData()
+//	if err != nil {
+//		logger.Instance.Warnw("FillFromFile", "consumer.ReadData", err)
+//		return
+//	}
+//	storage.data = *memStorageData
+//}
