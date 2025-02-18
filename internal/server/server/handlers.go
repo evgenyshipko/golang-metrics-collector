@@ -11,7 +11,7 @@ import (
 	"net/http"
 )
 
-func (s *Server) StoreMetric(res http.ResponseWriter, req *http.Request) {
+func (s *Server) StoreMetricHandler(res http.ResponseWriter, req *http.Request) {
 	metricData, err := m.GetMetricData(req.Context())
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusBadRequest)
@@ -53,7 +53,7 @@ func (s *Server) StoreMetric(res http.ResponseWriter, req *http.Request) {
 	res.Write(bytes)
 }
 
-func (s *Server) GetMetric(res http.ResponseWriter, req *http.Request) {
+func (s *Server) GetMetricDataHandler(res http.ResponseWriter, req *http.Request) {
 	metricData, err := m.GetMetricData(req.Context())
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusBadRequest)
@@ -83,10 +83,36 @@ func (s *Server) GetMetric(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	logger.Instance.Infow("GetMetric", "metricType", metricType, "name", metricName, "value", value)
+	logger.Instance.Infow("GetMetricDataHandler", "metricType", metricType, "name", metricName, "value", value)
 
 	res.Header().Set("Content-Type", "application/json")
 	res.Write(bytes)
+}
+
+func (s *Server) GetMetricValueHandler(res http.ResponseWriter, req *http.Request) {
+	metricData, err := m.GetMetricData(req.Context())
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	metricType := metricData.MType
+	metricName := metricData.ID
+
+	value := s.store.Get(metricType, metricName)
+	if value == nil {
+		http.Error(res, "Метрики с таким именем нет в базе", http.StatusNotFound)
+		return
+	}
+
+	strVal, err := converter.MetricValueToString(metricType, value)
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusBadRequest)
+	}
+
+	logger.Instance.Infow("GetMetric", "metricType", metricType, "name", metricName, "value", strVal)
+
+	res.Write([]byte(strVal))
 }
 
 func (s *Server) ShowAllMetricsHandler(res http.ResponseWriter, req *http.Request) {
