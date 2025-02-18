@@ -12,9 +12,12 @@ func main() {
 
 	s := server.Setup()
 
-	values := setup.GetStartupValues()
+	values, err := setup.GetStartupValues()
+	if err != nil {
+		logger.Instance.Fatalw("Аргументы не прошли валидацию", err)
+	}
 
-	err := http.ListenAndServe(values.Host, s.Routes())
+	err = http.ListenAndServe(values.Host, s.Routes())
 	if err != nil {
 		panic(err)
 	}
