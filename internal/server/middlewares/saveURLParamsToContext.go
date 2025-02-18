@@ -47,6 +47,8 @@ func SaveURLParamsToContext(next http.Handler) http.Handler {
 			}
 		}
 
+		logger.Instance.Debugw("SaveURLParamsToContext", "metricData", metricData)
+
 		ctx := context.WithValue(r.Context(), MetricDataKey, metricData)
 
 		next.ServeHTTP(w, r.WithContext(ctx))

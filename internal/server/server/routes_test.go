@@ -34,22 +34,22 @@ func TestPostMetric(t *testing.T) {
 				expectedCode: http.StatusBadRequest,
 			},
 		},
-		//{
-		//	name: "Метод POST /update/dkdkd/ вернет 400  т.к. урл не валиден",
-		//	args: args{
-		//		method:       http.MethodPost,
-		//		url:          "/update/dkdkd/",
-		//		expectedCode: http.StatusBadRequest,
-		//	},
-		//},
-		//{
-		//	name: "Метод POST /update/azaza/dhdh/1221/2323 вернет 400  т.к. урл не валиден",
-		//	args: args{
-		//		method:       http.MethodPost,
-		//		url:          "/update/azaza/dhdh/1221/2323",
-		//		expectedCode: http.StatusBadRequest,
-		//	},
-		//},
+		{
+			name: "Метод POST /update/dkdkd/ вернет 400  т.к. имя метрики не передано",
+			args: args{
+				method:       http.MethodPost,
+				url:          "/update/dkdkd/",
+				expectedCode: http.StatusNotFound,
+			},
+		},
+		{
+			name: "Метод POST /update/azaza/dhdh/1221/2323 вернет 404  т.к. такого урла нет",
+			args: args{
+				method:       http.MethodPost,
+				url:          "/update/azaza/dhdh/1221/2323",
+				expectedCode: http.StatusNotFound,
+			},
+		},
 		{
 			name: "Метод POST /update/gauge/ вернет 404  т.к. не указано имя и значение метрики",
 			args: args{
@@ -130,15 +130,6 @@ func TestPostMetric(t *testing.T) {
 				expectedCode: http.StatusBadRequest,
 			},
 		},
-		//{
-		//	name: "Метод POST /update/ вернет 400  т.к. body пустое",
-		//	args: args{
-		//		method:       http.MethodPost,
-		//		url:          "/update/",
-		//		expectedCode: http.StatusBadRequest,
-		//		json:         "",
-		//	},
-		//},
 		{
 			name: "Метод POST /update/ вернет 404  т.к. не указано имя метрики",
 			args: args{
@@ -257,6 +248,39 @@ func TestPostMetric(t *testing.T) {
 				url:          "/value/",
 				expectedCode: http.StatusNotFound,
 				json:         `{"id": "privet", "type": "counter"}`,
+			},
+		},
+		// далее тестируем метод GET /value/
+		{
+			name: "Метод GET /value/ вернет 405 т.к. роут есть, но метод GET не принимает",
+			args: args{
+				method:       http.MethodGet,
+				url:          "/value/",
+				expectedCode: http.StatusMethodNotAllowed,
+			},
+		},
+		{
+			name: "Метод GET /value/azaz вернет 404 т.к. такого роута нет",
+			args: args{
+				method:       http.MethodGet,
+				url:          "/value/azaz",
+				expectedCode: http.StatusNotFound,
+			},
+		},
+		{
+			name: "Метод GET /value/azaz/name вернет 400 т.к. передан неизвестный тип метрики",
+			args: args{
+				method:       http.MethodGet,
+				url:          "/value/azaz/name",
+				expectedCode: http.StatusBadRequest,
+			},
+		},
+		{
+			name: "Метод GET /value/counter/name вернет 404 т.к. имени с метрикой name тем в базе",
+			args: args{
+				method:       http.MethodGet,
+				url:          "/value/counter/name",
+				expectedCode: http.StatusNotFound,
 			},
 		},
 	}

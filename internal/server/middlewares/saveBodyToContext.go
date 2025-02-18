@@ -17,8 +17,6 @@ const MetricDataKey ContextKey = "metricData"
 func SaveBodyToContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 
-		logger.Instance.Info("SaveBodyToContext")
-
 		var metricData c.MetricData
 		var buf bytes.Buffer
 		_, err := buf.ReadFrom(req.Body)
@@ -32,6 +30,8 @@ func SaveBodyToContext(next http.Handler) http.Handler {
 			http.Error(res, err.Error(), http.StatusBadRequest)
 			return
 		}
+
+		logger.Instance.Debugw("SaveBodyToContext", "metricData", metricData)
 
 		ctx := context.WithValue(req.Context(), MetricDataKey, metricData)
 
