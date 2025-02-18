@@ -12,10 +12,12 @@ import (
 
 type ContextKey string
 
-const metricDataKey ContextKey = "metricData"
+const MetricDataKey ContextKey = "metricData"
 
 func SaveBodyToContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+
+		logger.Instance.Info("SaveBodyToContext")
 
 		var metricData c.MetricData
 		var buf bytes.Buffer
@@ -31,14 +33,14 @@ func SaveBodyToContext(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(req.Context(), metricDataKey, metricData)
+		ctx := context.WithValue(req.Context(), MetricDataKey, metricData)
 
 		next.ServeHTTP(res, req.WithContext(ctx))
 	})
 }
 
 func GetMetricData(ctx context.Context) (c.MetricData, error) {
-	metricData := ctx.Value(metricDataKey)
+	metricData := ctx.Value(MetricDataKey)
 
 	data, ok := metricData.(c.MetricData)
 	if !ok {
