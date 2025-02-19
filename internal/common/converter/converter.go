@@ -3,6 +3,8 @@ package converter
 import (
 	"fmt"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
+	"reflect"
 	"strconv"
 )
 
@@ -16,6 +18,8 @@ func ToInt64(value interface{}) (int64, error) {
 		return int64(v), nil
 	case int64:
 		return v, nil
+	case float64:
+		return int64(v), nil
 	default:
 		return 0, fmt.Errorf("%T не конвертируется в int64", v)
 	}
@@ -76,6 +80,7 @@ func MetricValueToString(metricType consts.Metric, value interface{}) (string, e
 func GenerateMetricData(metricType consts.Metric, name string, value interface{}) (consts.MetricData, error) {
 	var GaugeValue *float64
 	var CounterValue *int64
+	logger.Instance.Debugw("GenerateMetricData", "value", value, "type", reflect.TypeOf(value).String())
 	if metricType == consts.COUNTER {
 		intVal, err := ToInt64(value)
 		if err != nil {
