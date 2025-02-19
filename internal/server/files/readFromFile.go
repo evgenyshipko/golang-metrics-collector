@@ -18,5 +18,5 @@ func ReadFromFile(fileName string, storage *storage.MemStorage) {
 		return
 	}
 	storage.SetData(*memStorageData)
-	logger.Instance.Info("Прочитано успешно")
+	logger.Instance.Infow("ReadFromFile", "Прочитано успешно", *memStorageData)
 }
