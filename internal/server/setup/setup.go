@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/setup"
+	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -15,7 +17,18 @@ type ServerStartupValues struct {
 	Restore         bool          `env:"RESTORE"`
 }
 
+func GetProjectRoot() string {
+	dir, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	return dir
+}
+
 func GetStartupValues(args []string) (ServerStartupValues, error) {
+
+	rootDir := GetProjectRoot()
+	defaultFilePath := filepath.Join(rootDir, "temp.json")
 
 	flagSet := flag.NewFlagSet("config", flag.ContinueOnError)
 
@@ -23,7 +36,7 @@ func GetStartupValues(args []string) (ServerStartupValues, error) {
 
 	flagStoreInterval := flagSet.Int("i", 300, "interval between saving metrics to file")
 
-	flagFileStoragePath := flagSet.String("f", "./temp.json", "temp file to store metrics")
+	flagFileStoragePath := flagSet.String("f", defaultFilePath, "temp file to store metrics")
 
 	flagRestore := flagSet.Bool("r", true, "restore saved metrics from file or not")
 

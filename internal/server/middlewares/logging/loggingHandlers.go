@@ -22,18 +22,18 @@ func LoggingHandlers(h http.Handler) http.Handler {
 
 		duration := time.Since(start)
 
-		// Если статус 4xx или 5xx — сохраняем тело ошибки
+		loggerFunc := logger.Instance.Infow
 		if responseData.Status >= 400 {
-			responseData.Error = lw.Body.String()
+			loggerFunc = logger.Instance.Warnw
 		}
 
-		logger.Instance.Infow("Request",
+		loggerFunc("Request",
 			"uri", r.RequestURI,
 			"method", r.Method,
 			"status", responseData.Status,
 			"duration", duration,
 			"size", responseData.Size,
-			"error", responseData.Error,
+			"responseBody", lw.Body.String(),
 		)
 	}
 	return http.HandlerFunc(logFn)
