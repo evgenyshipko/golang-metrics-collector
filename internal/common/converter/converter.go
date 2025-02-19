@@ -18,8 +18,6 @@ func ToInt64(value interface{}) (int64, error) {
 		return int64(v), nil
 	case int64:
 		return v, nil
-	case float64:
-		return int64(v), nil
 	default:
 		return 0, fmt.Errorf("%T не конвертируется в int64", v)
 	}

@@ -7,6 +7,7 @@ import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/converter"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"reflect"
+	"strings"
 )
 
 type MemStorageData map[string]interface{}
@@ -80,5 +81,15 @@ func (storage *MemStorage) GetAll() *MemStorageData {
 }
 
 func (storage *MemStorage) SetData(data MemStorageData) {
+
+	// восстанавливаем правильный тип для counter
+	for key, value := range data {
+		if strings.HasPrefix(key, "counter_") {
+			if floatVal, ok := value.(float64); ok {
+				data[key] = int64(floatVal)
+			}
+		}
+	}
+
 	storage.data = data
 }
