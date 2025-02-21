@@ -4,27 +4,64 @@ import (
 	"flag"
 	"fmt"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/setup"
 	"os"
+	"path/filepath"
+	"time"
 )
 
 type ServerStartupValues struct {
-	Host string `env:"ADDRESS"`
+	Host            string        `env:"ADDRESS"`
+	StoreInterval   time.Duration `env:"STORE_INTERVAL"`
+	FileStoragePath string        `env:"FILE_STORAGE_PATH"`
+	Restore         bool          `env:"RESTORE"`
 }
 
-func GetStartupValues() ServerStartupValues {
-	flagHost := flag.String("a", "localhost:8080", "input host with port")
-	flag.Parse()
+func GetProjectRoot() string {
+	dir, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	return dir
+}
 
-	var cfg ServerStartupValues
-	envHost, exists := os.LookupEnv("ADDRESS")
+func GetStartupValues(args []string) (ServerStartupValues, error) {
 
-	if exists {
-		cfg.Host = envHost
-	} else {
-		cfg.Host = *flagHost
+	rootDir := GetProjectRoot()
+	defaultFilePath := filepath.Join(rootDir, "temp.json")
+
+	flagSet := flag.NewFlagSet("config", flag.ContinueOnError)
+
+	flagHost := flagSet.String("a", "localhost:8080", "input host with port")
+
+	flagStoreInterval := flagSet.Int("i", 300, "interval between saving metrics to file")
+
+	flagFileStoragePath := flagSet.String("f", defaultFilePath, "temp file to store metrics")
+
+	flagRestore := flagSet.Bool("r", true, "restore saved metrics from file or not")
+
+	// Парсим переданные аргументы
+	if err := flagSet.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			return ServerStartupValues{}, err
+		}
 	}
 
-	logger.Info(fmt.Sprintf("Параметры запуска: %+v\n", cfg))
+	var cfg ServerStartupValues
 
-	return cfg
+	cfg.Host = setup.GetStringVariable("ADDRESS", flagHost)
+
+	cfg.FileStoragePath = setup.GetStringVariable("FILE_STORAGE_PATH", flagFileStoragePath)
+
+	cfg.Restore = setup.GetBoolVariable("RESTORE", flagRestore)
+
+	storeInterval, err := setup.GetInterval("STORE_INTERVAL", flagStoreInterval, false)
+	if err != nil {
+		return ServerStartupValues{}, fmt.Errorf("%w", err)
+	}
+	cfg.StoreInterval = storeInterval
+
+	logger.Instance.Infow("GetStartupValues", "Параметры запуска:", cfg)
+
+	return cfg, nil
 }

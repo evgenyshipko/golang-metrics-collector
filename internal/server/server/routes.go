@@ -5,16 +5,18 @@ import (
 	"github.com/go-chi/chi"
 )
 
-func (s *Server) routes() {
+func (s *CustomServer) routes() {
 	s.router.Get("/", s.ShowAllMetricsHandler)
-	s.router.Get("/value/{metricType}/{metricName}", s.GetMetric)
-	s.router.Post("/update/", s.BadRequestHandler)
 
-	s.router.With(m.ValidateMetricType).Route("/update/{metricType}", func(r chi.Router) {
-		r.Post("/", s.NotFoundHandler)
+	s.router.Route("/value", func(r chi.Router) {
+		r.With(m.SaveBodyToContext, m.ValidateName, m.ValidateType).Post("/", s.GetMetricDataHandler)
 
-		r.With(m.ValidateMetricValue).Post("/{metricValue}", s.NotFoundHandler)
+		r.With(m.SaveURLParamsToContext, m.ValidateName, m.ValidateType).Get("/{metricType}/{metricName}", s.GetMetricValueHandler)
+	})
 
-		r.With(m.ValidateMetricValue).Post("/{metricName}/{metricValue}", s.PostMetric)
+	s.router.Route("/update", func(r chi.Router) {
+		r.With(m.SaveBodyToContext, m.ValidateName, m.ValidateType, m.ValidateValue).Post("/", s.StoreMetricHandler)
+
+		r.With(m.SaveURLParamsToContext, m.ValidateName, m.ValidateType, m.ValidateValue).Post("/{metricType}/{metricName}/{metricValue}", s.StoreMetricHandler)
 	})
 }

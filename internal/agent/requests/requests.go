@@ -1,28 +1,57 @@
 package requests
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/gzip"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/converter"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/go-resty/resty/v2"
 )
 
-func SendMetric(domain string, metricType consts.Metric, name string, value string) error {
-	url := fmt.Sprintf("http://%s/update/%s/%s/%s", domain, metricType, name, value)
+func SendMetric(domain string, metricType consts.Metric, name string, value interface{}) error {
+
+	requestData, err := converter.GenerateMetricData(metricType, name, value)
+	if err != nil {
+		logger.Instance.Warnw("SendMetric", "GenerateMetricData", err)
+		return err
+	}
+
+	body, err := json.Marshal(requestData)
+	if err != nil {
+		logger.Instance.Warnw("SendMetric", "json.Marshal err", err)
+		return err
+	}
+
+	compressedBody, err := gzip.Compress(body)
+	if err != nil {
+		logger.Instance.Warnw("SendMetric", "compress err", err)
+		return err
+	}
+
+	url := fmt.Sprintf("http://%s/update/", domain)
 
 	client := resty.New()
-	resp, err := client.R().Post(url)
+
+	//ЗАПОМНИТЬ: resty автоматически добавляет заголовок "Accept-Encoding", "gzip" и распаковывает отвпет если он пришел в gzip
+	resp, err := client.R().
+		SetBody(compressedBody).
+		SetHeader("Content-Encoding", "gzip").
+		SetHeader("Content-Type", "application/json").
+		Post(url)
 
 	if resp.StatusCode() == 200 {
-		logger.Info("Метрики успешно отправлены")
-		return nil
+		logger.Instance.Info("Метрики успешно отправлены")
 	}
 
 	if err != nil {
-		return fmt.Errorf("не удалось выполнить запрос: %w", err)
+		logger.Instance.Errorf("SendMetric", "не удалось выполнить запрос", err)
 	}
 
-	logger.Info("SendMetric Response", "url", url, "status", resp.Status(), "body", resp.Body())
+	respBody := resp.Body()
+
+	logger.Instance.Infow("SendMetric Response", "url", url, "status", resp.Status(), "body", respBody)
 
 	return nil
 }

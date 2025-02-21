@@ -5,21 +5,26 @@ import (
 	"fmt"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/converter"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
+	"reflect"
+	"strings"
 )
 
+type MemStorageData map[string]interface{}
+
 type MemStorage struct {
-	data map[string]interface{}
+	data MemStorageData
 }
 
 type MemStorageInterface[V comparable] interface {
 	Get(metricType string, name string) V
 	Set(metricType string, name string, value V) error
-	GetAll() map[string]interface{}
+	GetAll() MemStorageData
 }
 
 func NewMemStorage() *MemStorage {
 	return &MemStorage{
-		data: make(map[string]interface{}),
+		data: make(MemStorageData),
 	}
 }
 
@@ -34,7 +39,7 @@ func (storage *MemStorage) Get(metricType consts.Metric, name string) interface{
 
 func (storage *MemStorage) Set(metricType consts.Metric, name string, value interface{}) error {
 
-	//logger.Info(string(metricType), "name", name, "value", value, "type", reflect.TypeOf(value).String())
+	logger.Instance.Debugw("MemStorage.Set", "type", metricType, "name", name, "value", value, "type", reflect.TypeOf(value).String())
 
 	key := getKey(metricType, name)
 
@@ -71,6 +76,20 @@ func (storage *MemStorage) Set(metricType consts.Metric, name string, value inte
 	return errors.New("неизвестный тип метрики")
 }
 
-func (storage *MemStorage) GetAll() map[string]interface{} {
-	return storage.data
+func (storage *MemStorage) GetAll() *MemStorageData {
+	return &storage.data
+}
+
+func (storage *MemStorage) SetData(data MemStorageData) {
+
+	// восстанавливаем правильный тип для counter
+	for key, value := range data {
+		if strings.HasPrefix(key, "counter_") {
+			if floatVal, ok := value.(float64); ok {
+				data[key] = int64(floatVal)
+			}
+		}
+	}
+
+	storage.data = data
 }

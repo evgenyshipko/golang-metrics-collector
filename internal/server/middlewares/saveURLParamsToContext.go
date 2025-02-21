@@ -3,29 +3,26 @@ package middlewares
 import (
 	"context"
 	c "github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/url"
 	"net/http"
 	"strconv"
 )
 
-func ValidateMetricType(next http.Handler) http.Handler {
+func SaveURLParamsToContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		metricType := c.Metric(url.MyURLParam(r, c.MetricType))
-		if metricType != c.COUNTER && metricType != c.GAUGE {
-			http.Error(w, "Неизвестный тип метрики", http.StatusBadRequest)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
-}
+		logger.Instance.Info("SaveURLParamsToContext")
 
-func ValidateMetricValue(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		metricValue := url.MyURLParam(r, c.MetricValue)
 
 		metricType := c.Metric(url.MyURLParam(r, c.MetricType))
 
-		ctx := context.WithValue(r.Context(), c.MetricType, metricType)
+		metricName := url.MyURLParam(r, c.MetricName)
+
+		metricData := c.MetricData{
+			ID:    metricName,
+			MType: metricType,
+		}
 
 		if metricValue != "" {
 
@@ -36,7 +33,7 @@ func ValidateMetricValue(next http.Handler) http.Handler {
 					return
 				}
 
-				ctx = context.WithValue(r.Context(), c.MetricValue, float64Value)
+				metricData.Value = &float64Value
 
 			} else if metricType == c.COUNTER {
 				int64Value, err := strconv.ParseInt(metricValue, 10, 64)
@@ -45,10 +42,14 @@ func ValidateMetricValue(next http.Handler) http.Handler {
 					return
 				}
 
-				ctx = context.WithValue(r.Context(), c.MetricValue, int64Value)
+				metricData.Delta = &int64Value
 
 			}
 		}
+
+		logger.Instance.Debugw("SaveURLParamsToContext", "metricData", metricData)
+
+		ctx := context.WithValue(r.Context(), MetricDataKey, metricData)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

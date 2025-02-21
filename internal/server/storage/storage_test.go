@@ -78,7 +78,7 @@ func TestMemStorage_Set_MetricTypesCheck(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			storage := &MemStorage{
-				data: make(map[string]interface{}),
+				data: make(MemStorageData),
 			}
 			err := storage.Set(tt.args.metricType, tt.args.name, tt.args.value)
 			fmt.Println("err", err, "tt.wantErr", tt.wantErr)
@@ -116,7 +116,7 @@ func TestMemStorage_Set_SaveMetricTwice(t *testing.T) {
 			},
 		},
 		{
-			//FIXME: тест не помог найти ошибку в коде, надо переделать чтобы можно было 2 разные значения посылать
+			//TODO: тест не помог найти ошибку в коде, надо переделать чтобы можно было 2 разные значения посылать
 			name:    "Передаем метрику counter cо значением int 2 раза - значение складывается с предыдущим и имеет тип int64",
 			wantErr: false,
 			args: args{
@@ -130,7 +130,7 @@ func TestMemStorage_Set_SaveMetricTwice(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			storage := &MemStorage{
-				data: make(map[string]interface{}),
+				data: make(MemStorageData),
 			}
 			err := storage.Set(tt.args.metricType, tt.args.name, tt.args.value)
 			if (err != nil) != tt.wantErr {

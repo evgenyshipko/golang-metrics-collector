@@ -6,7 +6,21 @@ Agent collects metrics and send it to server. Server store metric values in memo
 
 ### Get started
 
-```go run ./cmd/server``` - run metrics collector (server)
+1. Run metrics collector (server)
 
-```go run ./cmd/agent``` - run agent (source of metric values)
+```bash
+go run ./cmd/server
+```
 
+2. Run agent (source of metric values)
+
+```bash
+go run ./cmd/agent
+```
+
+### Unit tests
+
+To run unit test execute command:
+```bash
+go test ./... -v
+```
