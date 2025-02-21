@@ -34,7 +34,7 @@ func SendMetric(domain string, metricType consts.Metric, name string, value inte
 
 	client := resty.New()
 
-	//ЗАПОМНИТЬ: resty автоматически добавляет заголовок "Accept-Encoding", "gzip" и распаковывает отвпет если он пришел в gzip
+	//ЗАПОМНИТЬ: resty автоматически добавляет заголовок "Accept-Encoding", "gzip" и распаковывает ответ если он пришел в gzip
 	resp, err := client.R().
 		SetBody(compressedBody).
 		SetHeader("Content-Encoding", "gzip").

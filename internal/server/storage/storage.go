@@ -1,79 +1,81 @@
 package storage
 
 import (
-	"errors"
-	"fmt"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/common/converter"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
-	"reflect"
-	"strings"
 )
 
-type MemStorageData map[string]interface{}
+type Data struct {
+	Name    string   `json:"name"`
+	Counter *int64   `json:"counter,omitempty"`
+	Gauge   *float64 `json:"gauge,omitempty"`
+}
+
+type MemStorageData []Data
 
 type MemStorage struct {
 	data MemStorageData
 }
 
-type MemStorageInterface[V comparable] interface {
-	Get(metricType string, name string) V
-	Set(metricType string, name string, value V) error
-	GetAll() MemStorageData
-}
-
 func NewMemStorage() *MemStorage {
 	return &MemStorage{
-		data: make(MemStorageData),
+		data: MemStorageData{},
 	}
-}
-
-func getKey(metricType consts.Metric, metricName string) string {
-	return fmt.Sprintf(`%s_%s`, metricType, metricName)
 }
 
 func (storage *MemStorage) Get(metricType consts.Metric, name string) interface{} {
-	key := getKey(metricType, name)
-	return storage.data[key]
+	if metricType == consts.COUNTER {
+		dataPointer := storage.getCounterData(name)
+		if dataPointer != nil && dataPointer.Counter != nil {
+			return *dataPointer.Counter
+		}
+	}
+	if metricType == consts.GAUGE {
+		dataPointer := storage.getGaugeData(name)
+		if dataPointer != nil && dataPointer.Gauge != nil {
+			return *dataPointer.Gauge
+		}
+	}
+	return nil
 }
 
-func (storage *MemStorage) Set(metricType consts.Metric, name string, value interface{}) error {
-
-	logger.Instance.Debugw("MemStorage.Set", "type", metricType, "name", name, "value", value, "type", reflect.TypeOf(value).String())
-
-	key := getKey(metricType, name)
-
-	if metricType == consts.COUNTER {
-
-		int64Value, err := converter.ToInt64(value)
-		if err != nil {
-			return fmt.Errorf("ошибка в Set, metricType: %s, %w", metricType, err)
+func (storage *MemStorage) getCounterData(name string) *Data {
+	for index, data := range storage.data {
+		if data.Name == name && data.Counter != nil {
+			return &storage.data[index]
 		}
-
-		if storage.data[key] != nil {
-			prevInt64Value, err := converter.ToInt64(storage.data[key])
-			if err != nil {
-				return fmt.Errorf("ошибка в Set, metricType: %s, %w", metricType, err)
-			}
-			storage.data[key] = prevInt64Value + int64Value
-		} else {
-			storage.data[key] = int64Value
-		}
-		return nil
 	}
+	return nil
+}
 
-	if metricType == consts.GAUGE {
-
-		float64Value, err := converter.ToFloat64(value)
-		if err != nil {
-			return fmt.Errorf("ошибка в Set, metricType: %s, %w", metricType, err)
+func (storage *MemStorage) getGaugeData(name string) *Data {
+	for index, data := range storage.data {
+		if data.Name == name && data.Gauge != nil {
+			// ЗАПОМНИТЬ: берем значение из слайса по индексу т.к. нам далее нужно менять оригинальне значение,
+			// а data - это копия и менять ее поля не имеет смысла
+			return &storage.data[index]
 		}
-
-		storage.data[key] = float64Value
-		return nil
 	}
+	return nil
+}
 
-	return errors.New("неизвестный тип метрики")
+func (storage *MemStorage) SetGauge(name string, value *float64) {
+	dataPointer := storage.getGaugeData(name)
+	if dataPointer != nil {
+		dataPointer.Gauge = value
+		return
+	}
+	storage.data = append(storage.data, Data{Name: name, Gauge: value})
+}
+
+func (storage *MemStorage) SetCounter(name string, value *int64) {
+	dataPointer := storage.getCounterData(name)
+	if dataPointer != nil {
+		existingValue := *dataPointer.Counter
+		resultValue := existingValue + *value
+		dataPointer.Counter = &resultValue
+		return
+	}
+	storage.data = append(storage.data, Data{Name: name, Counter: value})
 }
 
 func (storage *MemStorage) GetAll() *MemStorageData {
@@ -81,15 +83,5 @@ func (storage *MemStorage) GetAll() *MemStorageData {
 }
 
 func (storage *MemStorage) SetData(data MemStorageData) {
-
-	// восстанавливаем правильный тип для counter
-	for key, value := range data {
-		if strings.HasPrefix(key, "counter_") {
-			if floatVal, ok := value.(float64); ok {
-				data[key] = int64(floatVal)
-			}
-		}
-	}
-
 	storage.data = data
 }

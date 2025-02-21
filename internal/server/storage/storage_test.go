@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"fmt"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -11,141 +10,117 @@ func TestMemStorage_Set_MetricTypesCheck(t *testing.T) {
 	type args struct {
 		metricType consts.Metric
 		name       string
-		value      interface{}
+		Gauge      *float64
+		Counter    *int64
 	}
+
+	var gaugeVal = 111.1
+	var counterVal int64 = 111
+
 	tests := []struct {
-		name                 string
-		args                 args
-		wantErr              bool
-		expectedErrorMessage string
+		name string
+		args args
 	}{
 		{
-			name:    "Передаем метрику gauge cо значением float64 - ошибки нет",
-			wantErr: false,
+			name: "Передаем метрику gauge cо значением Gauge - значение записалось в стор",
 			args: args{
 				metricType: consts.GAUGE,
 				name:       "name",
-				value:      111.1,
+				Gauge:      &gaugeVal,
 			},
 		},
 		{
-			name:    "Передаем метрику gauge cо значением int - ошибки нет",
-			wantErr: false,
+			name: "Передаем метрику gauge cо значением Counter - значение не записалось в стор",
 			args: args{
 				metricType: consts.GAUGE,
 				name:       "name",
-				value:      111,
+				Counter:    &counterVal,
 			},
 		},
 		{
-			name:    "Передаем метрику counter cо значением float64 - ошибка",
-			wantErr: true,
+			name: "Передаем метрику counter cо значением int64 - значение записалось в стор",
 			args: args{
 				metricType: consts.COUNTER,
 				name:       "name",
-				value:      111.1,
+				Counter:    &counterVal,
 			},
 		},
 		{
-			name:    "Передаем метрику counter cо значением int - ошибки нет",
-			wantErr: false,
+			name: "Передаем метрику counter cо значением float64 - значение не записалось в стор",
 			args: args{
 				metricType: consts.COUNTER,
 				name:       "name",
-				value:      111,
-			},
-		},
-		{
-			name:    "Передаем метрику counter cо значением int64 - ошибки нет",
-			wantErr: false,
-			args: args{
-				metricType: consts.COUNTER,
-				name:       "name",
-				value:      9223372036854775807,
-			},
-		},
-		{
-			name:                 "Передаем неизвестную метрику - ошибка",
-			wantErr:              true,
-			expectedErrorMessage: "неизвестный тип метрики",
-			args: args{
-				metricType: "unknown metric",
-				name:       "name",
-				value:      9223372036854775807,
+				Gauge:      &gaugeVal,
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			storage := &MemStorage{
-				data: make(MemStorageData),
+				data: MemStorageData{},
 			}
-			err := storage.Set(tt.args.metricType, tt.args.name, tt.args.value)
-			fmt.Println("err", err, "tt.wantErr", tt.wantErr)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Set() error = %v, wantErr %v", err, tt.wantErr)
+
+			if tt.args.metricType == consts.GAUGE {
+				storage.SetGauge(tt.args.name, tt.args.Gauge)
+			} else if tt.args.metricType == consts.COUNTER {
+				storage.SetCounter(tt.args.name, tt.args.Counter)
 			}
-			if tt.wantErr && err != nil && tt.expectedErrorMessage != "" {
-				assert.Equal(t, err.Error(), tt.expectedErrorMessage)
+
+			value := storage.Get(tt.args.metricType, tt.args.name)
+			if tt.args.metricType == consts.GAUGE {
+				if tt.args.Gauge != nil {
+					assert.Equal(t, *tt.args.Gauge, value)
+				}
+				if tt.args.Gauge == nil {
+					assert.Equal(t, nil, value)
+				}
+			}
+			if tt.args.metricType == consts.COUNTER {
+				if tt.args.Counter != nil {
+					assert.Equal(t, *tt.args.Counter, value)
+				}
+				if tt.args.Counter == nil {
+					assert.Equal(t, nil, value)
+				}
 			}
 		})
 	}
 }
 
-func TestMemStorage_Set_SaveMetricTwice(t *testing.T) {
-	type args struct {
-		metricType    consts.Metric
-		name          string
-		value         interface{}
-		expectedValue interface{}
-	}
-	tests := []struct {
-		name                 string
-		args                 args
-		wantErr              bool
-		expectedErrorMessage string
-	}{
-		{
-			name:    "Передаем метрику gauge cо значением float64 2 раза - значение остается таким же и имеет тип float64",
-			wantErr: false,
-			args: args{
-				metricType:    consts.GAUGE,
-				name:          "name",
-				value:         111.1,
-				expectedValue: 111.1,
-			},
-		},
-		{
-			//TODO: тест не помог найти ошибку в коде, надо переделать чтобы можно было 2 разные значения посылать
-			name:    "Передаем метрику counter cо значением int 2 раза - значение складывается с предыдущим и имеет тип int64",
-			wantErr: false,
-			args: args{
-				metricType:    consts.COUNTER,
-				name:          "name",
-				value:         111,
-				expectedValue: int64(222),
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			storage := &MemStorage{
-				data: make(MemStorageData),
-			}
-			err := storage.Set(tt.args.metricType, tt.args.name, tt.args.value)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Set() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			err = storage.Set(tt.args.metricType, tt.args.name, tt.args.value)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Set() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			if tt.wantErr && err != nil && tt.expectedErrorMessage != "" {
-				assert.Equal(t, err.Error(), tt.expectedErrorMessage)
-			}
+func TestMemStorage_Set_SaveGaugeMetricTwice(t *testing.T) {
+	t.Run("Передаем метрику gauge cо значением float64 2 раза - записывается последнее переданное значение и имеет тип float64", func(t *testing.T) {
+		storage := &MemStorage{
+			data: MemStorageData{},
+		}
 
-			key := fmt.Sprintf("%s_%s", tt.args.metricType, tt.args.name)
-			assert.Equal(t, tt.args.expectedValue, storage.data[key])
-		})
-	}
+		name := "test metric"
+		gauge1 := 111.1
+		gauge2 := 105.1
+		expectedGauge := 105.1
+
+		storage.SetGauge(name, &gauge1)
+		storage.SetGauge(name, &gauge2)
+		result := storage.Get(consts.GAUGE, name)
+
+		assert.Equal(t, expectedGauge, result)
+	})
+}
+
+func TestMemStorage_Set_SaveCounterMetricTwice(t *testing.T) {
+	t.Run("Передаем метрику counter cо значением int64 2 раза - записывается сумма значений и имеет тип int64", func(t *testing.T) {
+		storage := &MemStorage{
+			data: MemStorageData{},
+		}
+
+		name := "test metric"
+		var counter1 int64 = 100
+		var counter2 int64 = 200
+		var expectedCounter int64 = 300
+
+		storage.SetCounter(name, &counter1)
+		storage.SetCounter(name, &counter2)
+		result := storage.Get(consts.COUNTER, name)
+
+		assert.Equal(t, expectedCounter, result)
+	})
 }

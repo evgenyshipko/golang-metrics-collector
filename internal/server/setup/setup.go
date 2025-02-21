@@ -20,10 +20,12 @@ type ServerStartupValues struct {
 func GetProjectRoot() string {
 	dir, err := os.Getwd()
 	if err != nil {
-		panic(err)
+		logger.Instance.Fatal(err.Error())
 	}
 	return dir
 }
+
+const DefaultStoreIntervalSeconds = 300
 
 func GetStartupValues(args []string) (ServerStartupValues, error) {
 
@@ -34,7 +36,7 @@ func GetStartupValues(args []string) (ServerStartupValues, error) {
 
 	flagHost := flagSet.String("a", "localhost:8080", "input host with port")
 
-	flagStoreInterval := flagSet.Int("i", 300, "interval between saving metrics to file")
+	flagStoreInterval := flagSet.Int("i", DefaultStoreIntervalSeconds, "interval between saving metrics to file")
 
 	flagFileStoragePath := flagSet.String("f", defaultFilePath, "temp file to store metrics")
 
