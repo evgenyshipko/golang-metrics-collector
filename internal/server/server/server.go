@@ -6,27 +6,29 @@ import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/files"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares/logging"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/services"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/setup"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
 	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
 	"net/http"
 	"time"
 )
 
 type CustomServer struct {
-	http.Server
-	router *chi.Mux
-	store  *storage.MemStorage
-	config *setup.ServerStartupValues
+	server  http.Server
+	router  *chi.Mux
+	store   storage.Storage
+	config  *setup.ServerStartupValues
+	service services.Service
 }
 
-func NewServer(router *chi.Mux, store *storage.MemStorage, config *setup.ServerStartupValues) *CustomServer {
+func NewCustomServer(router *chi.Mux, store storage.Storage, config *setup.ServerStartupValues, service services.Service) *CustomServer {
 	s := &CustomServer{
-		Server: http.Server{Addr: config.Host, Handler: router},
-		router: router,
-		store:  store,
-		config: config,
+		server:  http.Server{Addr: config.Host, Handler: router},
+		router:  router,
+		store:   store,
+		config:  config,
+		service: service,
 	}
 	s.routes()
 	return s
@@ -42,8 +44,6 @@ func (s *CustomServer) GetStoreData() *storage.MemStorageData {
 
 func Create(config *setup.ServerStartupValues) *CustomServer {
 	router := chi.NewRouter()
-	// TODO: логгировать RequestId
-	router.Use(middleware.RequestID)
 
 	router.Use(middlewares.GzipDecompress)
 
@@ -57,13 +57,15 @@ func Create(config *setup.ServerStartupValues) *CustomServer {
 		files.ReadFromFile(config.FileStoragePath, store)
 	}
 
-	server := NewServer(router, store, config)
+	service := services.NewMetricService(store, config.StoreInterval, config.FileStoragePath)
+
+	server := NewCustomServer(router, store, config, service)
 	return server
 }
 
 func (s *CustomServer) Start() {
 	logger.Instance.Infow("SERVER STARTED!")
-	if err := s.ListenAndServe(); err != http.ErrServerClosed {
+	if err := s.server.ListenAndServe(); err != http.ErrServerClosed {
 		logger.Instance.Fatalw("httpServer.ListenAndServe", "Ошибка запуска сервера", err)
 	}
 }
@@ -75,7 +77,7 @@ func (s *CustomServer) ShutDown() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	if err := s.Server.Shutdown(ctx); err != nil {
+	if err := s.server.Shutdown(ctx); err != nil {
 		logger.Instance.Warnw("httpServer.Shutdown", "Ошибка завершения сервера:", err)
 	}
 

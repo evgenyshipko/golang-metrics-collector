@@ -39,7 +39,7 @@ func SaveBodyToContext(next http.Handler) http.Handler {
 	})
 }
 
-func GetMetricData(ctx context.Context) (c.MetricData, error) {
+func GetMetricDataFromContext(ctx context.Context) (c.MetricData, error) {
 	metricData := ctx.Value(MetricDataKey)
 
 	data, ok := metricData.(c.MetricData)

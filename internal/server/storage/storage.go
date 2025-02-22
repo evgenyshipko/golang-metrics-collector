@@ -5,9 +5,8 @@ import (
 )
 
 type Data struct {
-	Name    string   `json:"name"`
-	Counter *int64   `json:"counter,omitempty"`
-	Gauge   *float64 `json:"gauge,omitempty"`
+	consts.Values
+	Name string `json:"name"`
 }
 
 type MemStorageData []Data
@@ -22,20 +21,32 @@ func NewMemStorage() *MemStorage {
 	}
 }
 
-func (storage *MemStorage) Get(metricType consts.Metric, name string) interface{} {
+type Storage interface {
+	Get(metricType consts.Metric, name string) *consts.Values
+	GetAll() *MemStorageData
+	SetGauge(name string, value *float64)
+	SetCounter(name string, value *int64)
+	SetData(data MemStorageData)
+}
+
+func (storage *MemStorage) Get(metricType consts.Metric, name string) *consts.Values {
 	if metricType == consts.COUNTER {
 		dataPointer := storage.getCounterData(name)
 		if dataPointer != nil && dataPointer.Counter != nil {
-			return *dataPointer.Counter
+			return &consts.Values{
+				Counter: dataPointer.Counter,
+			}
 		}
 	}
 	if metricType == consts.GAUGE {
 		dataPointer := storage.getGaugeData(name)
 		if dataPointer != nil && dataPointer.Gauge != nil {
-			return *dataPointer.Gauge
+			return &consts.Values{
+				Gauge: dataPointer.Gauge,
+			}
 		}
 	}
-	return nil
+	return &consts.Values{}
 }
 
 func (storage *MemStorage) getCounterData(name string) *Data {
@@ -50,7 +61,7 @@ func (storage *MemStorage) getCounterData(name string) *Data {
 func (storage *MemStorage) getGaugeData(name string) *Data {
 	for index, data := range storage.data {
 		if data.Name == name && data.Gauge != nil {
-			// ЗАПОМНИТЬ: берем значение из слайса по индексу т.к. нам далее нужно менять оригинальне значение,
+			// ЗАПОМНИТЬ: берем значение из слайса по индексу т.к. нам далее нужно менять оригинальное значение,
 			// а data - это копия и менять ее поля не имеет смысла
 			return &storage.data[index]
 		}
@@ -64,7 +75,7 @@ func (storage *MemStorage) SetGauge(name string, value *float64) {
 		dataPointer.Gauge = value
 		return
 	}
-	storage.data = append(storage.data, Data{Name: name, Gauge: value})
+	storage.data = append(storage.data, Data{Name: name, Values: consts.Values{Gauge: value}})
 }
 
 func (storage *MemStorage) SetCounter(name string, value *int64) {
@@ -75,7 +86,7 @@ func (storage *MemStorage) SetCounter(name string, value *int64) {
 		dataPointer.Counter = &resultValue
 		return
 	}
-	storage.data = append(storage.data, Data{Name: name, Counter: value})
+	storage.data = append(storage.data, Data{Name: name, Values: consts.Values{Counter: value}})
 }
 
 func (storage *MemStorage) GetAll() *MemStorageData {

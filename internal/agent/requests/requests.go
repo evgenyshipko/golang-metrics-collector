@@ -3,9 +3,9 @@ package requests
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/converter"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/gzip"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/common/converter"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/go-resty/resty/v2"
 )

@@ -67,20 +67,21 @@ func TestMemStorage_Set_MetricTypesCheck(t *testing.T) {
 			}
 
 			value := storage.Get(tt.args.metricType, tt.args.name)
+
 			if tt.args.metricType == consts.GAUGE {
 				if tt.args.Gauge != nil {
-					assert.Equal(t, *tt.args.Gauge, value)
+					assert.Equal(t, *tt.args.Gauge, *value.Gauge)
 				}
 				if tt.args.Gauge == nil {
-					assert.Equal(t, nil, value)
+					assert.Equal(t, consts.Values{}, *value)
 				}
 			}
 			if tt.args.metricType == consts.COUNTER {
 				if tt.args.Counter != nil {
-					assert.Equal(t, *tt.args.Counter, value)
+					assert.Equal(t, *tt.args.Counter, *value.Counter)
 				}
 				if tt.args.Counter == nil {
-					assert.Equal(t, nil, value)
+					assert.Equal(t, consts.Values{}, *value)
 				}
 			}
 		})
@@ -102,7 +103,7 @@ func TestMemStorage_Set_SaveGaugeMetricTwice(t *testing.T) {
 		storage.SetGauge(name, &gauge2)
 		result := storage.Get(consts.GAUGE, name)
 
-		assert.Equal(t, expectedGauge, result)
+		assert.Equal(t, expectedGauge, *result.Gauge)
 	})
 }
 
@@ -121,6 +122,6 @@ func TestMemStorage_Set_SaveCounterMetricTwice(t *testing.T) {
 		storage.SetCounter(name, &counter2)
 		result := storage.Get(consts.COUNTER, name)
 
-		assert.Equal(t, expectedCounter, result)
+		assert.Equal(t, expectedCounter, *result.Counter)
 	})
 }

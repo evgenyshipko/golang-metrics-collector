@@ -3,39 +3,19 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	c "github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/common/converter"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/server/files"
 	m "github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares"
 	"net/http"
 )
 
 func (s *CustomServer) StoreMetricHandler(res http.ResponseWriter, req *http.Request) {
-	metricData, err := m.GetMetricData(req.Context())
+	metricData, err := m.GetMetricDataFromContext(req.Context())
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	metricType := metricData.MType
-	name := metricData.ID
-
-	if metricType == c.GAUGE {
-		s.store.SetGauge(name, metricData.Value)
-	} else if metricType == c.COUNTER {
-		s.store.SetCounter(name, metricData.Delta)
-	}
-
-	if s.config.StoreInterval == 0 {
-		filePath := s.config.FileStoragePath
-		storeData := s.store.GetAll()
-		files.WriteToFile(filePath, storeData)
-	}
-
-	newValue := s.store.Get(metricType, name)
-
-	responseData, err := converter.GenerateMetricData(metricType, name, newValue)
+	responseData, err := s.service.ProcessMetric(metricData)
 	if err != nil {
 		logger.Instance.Warnw("StoreMetricHandler", "GenerateMetricData", err)
 		http.Error(res, err.Error(), http.StatusBadRequest)
@@ -54,25 +34,16 @@ func (s *CustomServer) StoreMetricHandler(res http.ResponseWriter, req *http.Req
 }
 
 func (s *CustomServer) GetMetricDataHandler(res http.ResponseWriter, req *http.Request) {
-	metricData, err := m.GetMetricData(req.Context())
+	metricData, err := m.GetMetricDataFromContext(req.Context())
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	metricType := metricData.MType
-	metricName := metricData.ID
-
-	value := s.store.Get(metricType, metricName)
-	if value == nil {
-		http.Error(res, "Метрики с таким именем нет в базе", http.StatusNotFound)
-		return
-	}
-
-	responseData, err := converter.GenerateMetricData(metricType, metricName, value)
+	responseData, err, status := s.service.GetMetricData(metricData)
 	if err != nil {
-		logger.Instance.Warnw("GetMetricDataHandler", "GenerateMetricData", err)
-		http.Error(res, err.Error(), http.StatusBadRequest)
+		logger.Instance.Warnw("GetMetricDataHandler", "GetMetricDataFromContext", err)
+		http.Error(res, err.Error(), status)
 		return
 	}
 
@@ -83,34 +54,31 @@ func (s *CustomServer) GetMetricDataHandler(res http.ResponseWriter, req *http.R
 		return
 	}
 
-	logger.Instance.Infow("GetMetricDataHandler", "metricType", metricType, "name", metricName, "value", value)
-
 	res.Header().Set("Content-Type", "application/json")
 	res.Write(bytes)
 }
 
 func (s *CustomServer) GetMetricValueHandler(res http.ResponseWriter, req *http.Request) {
-	metricData, err := m.GetMetricData(req.Context())
+	metricData, err := m.GetMetricDataFromContext(req.Context())
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	metricType := metricData.MType
-	metricName := metricData.ID
-
-	value := s.store.Get(metricType, metricName)
-	if value == nil {
-		http.Error(res, "Метрики с таким именем нет в базе", http.StatusNotFound)
+	value, err, status := s.service.GetMetricValue(metricData)
+	if err != nil {
+		logger.Instance.Warnw("GetMetricDataHandler", "GetMetricValue", err)
+		http.Error(res, err.Error(), status)
 		return
 	}
 
-	strVal, err := converter.MetricValueToString(metricType, value)
-	if err != nil {
-		http.Error(res, err.Error(), http.StatusBadRequest)
+	var strVal string
+	if value.Counter != nil {
+		strVal = fmt.Sprintf("%d", value.Counter)
 	}
-
-	logger.Instance.Infow("GetMetric", "metricType", metricType, "name", metricName, "value", strVal)
+	if value.Gauge != nil {
+		strVal = fmt.Sprintf("%d", value.Gauge)
+	}
 
 	res.Write([]byte(strVal))
 }

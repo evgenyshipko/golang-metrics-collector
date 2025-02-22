@@ -8,7 +8,7 @@ import (
 
 func ValidateValue(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		metricData, err := GetMetricData(req.Context())
+		metricData, err := GetMetricDataFromContext(req.Context())
 		if err != nil {
 			http.Error(res, err.Error(), http.StatusBadRequest)
 			return
