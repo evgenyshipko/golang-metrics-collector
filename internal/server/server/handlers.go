@@ -6,6 +6,7 @@ import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	m "github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares"
 	"net/http"
+	"strconv"
 )
 
 func (s *CustomServer) StoreMetricHandler(res http.ResponseWriter, req *http.Request) {
@@ -74,10 +75,10 @@ func (s *CustomServer) GetMetricValueHandler(res http.ResponseWriter, req *http.
 
 	var strVal string
 	if value.Counter != nil {
-		strVal = fmt.Sprintf("%d", *value.Counter)
+		strVal = strconv.FormatInt(*value.Counter, 10)
 	}
 	if value.Gauge != nil {
-		strVal = fmt.Sprintf("%f", *value.Gauge)
+		strVal = strconv.FormatFloat(*value.Gauge, 'f', -1, 64)
 	}
 
 	res.Write([]byte(strVal))
