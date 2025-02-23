@@ -6,7 +6,7 @@ import (
 
 func ValidateName(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		metricData, err := GetMetricData(r.Context())
+		metricData, err := GetMetricDataFromContext(r.Context())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
