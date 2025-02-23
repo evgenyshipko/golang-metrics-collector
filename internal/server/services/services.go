@@ -8,8 +8,8 @@ import (
 
 type Service interface {
 	ProcessMetric(metricData c.MetricData) (c.MetricData, error)
-	GetMetricData(metricData c.MetricData) (c.MetricData, error, int)
-	GetMetricValue(metricData c.MetricData) (c.Values, error, int)
+	GetMetricData(metricData c.MetricData) (c.MetricData, int, error)
+	GetMetricValue(metricData c.MetricData) (c.Values, int, error)
 }
 
 type MetricService struct {

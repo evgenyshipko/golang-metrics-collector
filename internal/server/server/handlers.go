@@ -40,7 +40,7 @@ func (s *CustomServer) GetMetricDataHandler(res http.ResponseWriter, req *http.R
 		return
 	}
 
-	responseData, err, status := s.service.GetMetricData(metricData)
+	responseData, status, err := s.service.GetMetricData(metricData)
 	if err != nil {
 		logger.Instance.Warnw("GetMetricDataHandler", "GetMetricDataFromContext", err)
 		http.Error(res, err.Error(), status)
@@ -65,7 +65,7 @@ func (s *CustomServer) GetMetricValueHandler(res http.ResponseWriter, req *http.
 		return
 	}
 
-	value, err, status := s.service.GetMetricValue(metricData)
+	value, status, err := s.service.GetMetricValue(metricData)
 	if err != nil {
 		logger.Instance.Warnw("GetMetricDataHandler", "GetMetricValue", err)
 		http.Error(res, err.Error(), status)
@@ -74,10 +74,10 @@ func (s *CustomServer) GetMetricValueHandler(res http.ResponseWriter, req *http.
 
 	var strVal string
 	if value.Counter != nil {
-		strVal = fmt.Sprintf("%d", value.Counter)
+		strVal = fmt.Sprintf("%d", *value.Counter)
 	}
 	if value.Gauge != nil {
-		strVal = fmt.Sprintf("%d", value.Gauge)
+		strVal = fmt.Sprintf("%f", *value.Gauge)
 	}
 
 	res.Write([]byte(strVal))

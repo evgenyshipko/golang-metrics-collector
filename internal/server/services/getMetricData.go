@@ -6,28 +6,28 @@ import (
 	"net/http"
 )
 
-func (s *MetricService) GetMetricValue(metricData c.MetricData) (c.Values, error, int) {
+func (s *MetricService) GetMetricValue(metricData c.MetricData) (c.Values, int, error) {
 	metricType := metricData.MType
 	metricName := metricData.ID
 
 	value := s.store.Get(metricType, metricName)
 	if value.Counter == nil && value.Gauge == nil {
-		return c.Values{}, errors.New("Метрики с таким именем нет в базе"), http.StatusNotFound
+		return c.Values{}, http.StatusNotFound, errors.New("метрики с таким именем нет в базе")
 	}
-	return *value, nil, 0
+	return *value, 0, nil
 }
 
-func (s *MetricService) GetMetricData(metricData c.MetricData) (c.MetricData, error, int) {
+func (s *MetricService) GetMetricData(metricData c.MetricData) (c.MetricData, int, error) {
 	metricType := metricData.MType
 	metricName := metricData.ID
 
-	value, err, status := s.GetMetricValue(metricData)
+	value, status, err := s.GetMetricValue(metricData)
 	if err != nil {
-		return c.MetricData{}, err, status
+		return c.MetricData{}, status, err
 	}
 	data, err := c.NewMetricData(metricType, metricName, value)
 	if err != nil {
-		return c.MetricData{}, err, http.StatusBadRequest
+		return c.MetricData{}, http.StatusBadRequest, err
 	}
-	return data, nil, 0
+	return data, 0, nil
 }
