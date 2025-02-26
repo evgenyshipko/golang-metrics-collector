@@ -2,7 +2,9 @@ package server
 
 import (
 	"context"
+	"database/sql"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
+	db2 "github.com/evgenyshipko/golang-metrics-collector/internal/server/db"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/files"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares/logging"
@@ -20,15 +22,17 @@ type CustomServer struct {
 	store   storage.Storage
 	config  *setup.ServerStartupValues
 	service services.Service
+	db      *sql.DB
 }
 
-func NewCustomServer(router *chi.Mux, store storage.Storage, config *setup.ServerStartupValues, service services.Service) *CustomServer {
+func NewCustomServer(router *chi.Mux, store storage.Storage, config *setup.ServerStartupValues, service services.Service, db *sql.DB) *CustomServer {
 	s := &CustomServer{
 		server:  http.Server{Addr: config.Host, Handler: router},
 		router:  router,
 		store:   store,
 		config:  config,
 		service: service,
+		db:      db,
 	}
 	s.routes()
 	return s
@@ -59,7 +63,9 @@ func Create(config *setup.ServerStartupValues) *CustomServer {
 
 	service := services.NewMetricService(store, config.StoreInterval, config.FileStoragePath)
 
-	server := NewCustomServer(router, store, config, service)
+	db := db2.ConnectToDb(config.DatabaseDSN)
+
+	server := NewCustomServer(router, store, config, service, db)
 	return server
 }
 
@@ -84,4 +90,8 @@ func (s *CustomServer) ShutDown() {
 	files.WriteToFile(s.config.FileStoragePath, s.store.GetAll())
 
 	logger.Instance.Info("Сервер успешно завершён")
+}
+
+func (s *CustomServer) GetDB() *sql.DB {
+	return s.db
 }

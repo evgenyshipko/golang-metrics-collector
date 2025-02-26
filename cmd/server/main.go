@@ -11,8 +11,6 @@ import (
 )
 
 func main() {
-	defer logger.Sync()
-
 	values, err := setup.GetStartupValues(os.Args[1:])
 	if err != nil {
 		logger.Instance.Fatalw("Аргументы не прошли валидацию", err)
@@ -30,4 +28,9 @@ func main() {
 	<-stopSignal
 
 	customServer.ShutDown()
+
+	defer func() {
+		logger.Sync()
+		customServer.GetDB().Close()
+	}()
 }

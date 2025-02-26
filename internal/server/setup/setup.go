@@ -15,6 +15,7 @@ type ServerStartupValues struct {
 	StoreInterval   time.Duration `env:"STORE_INTERVAL"`
 	FileStoragePath string        `env:"FILE_STORAGE_PATH"`
 	Restore         bool          `env:"RESTORE"`
+	DatabaseDSN     string        `env:"DATABASE_DSN"`
 }
 
 func GetProjectRoot() string {
@@ -42,6 +43,8 @@ func GetStartupValues(args []string) (ServerStartupValues, error) {
 
 	flagRestore := flagSet.Bool("r", true, "restore saved metrics from file or not")
 
+	flagDatabaseDsn := flagSet.String("d", "postgres://metrics:metrics@localhost:5433/metrics?sslmode=disable", "database dsn")
+
 	// Парсим переданные аргументы
 	if err := flagSet.Parse(args); err != nil {
 		if err == flag.ErrHelp {
@@ -50,6 +53,8 @@ func GetStartupValues(args []string) (ServerStartupValues, error) {
 	}
 
 	var cfg ServerStartupValues
+
+	cfg.DatabaseDSN = setup.GetStringVariable("DATABASE_DSN", flagDatabaseDsn)
 
 	cfg.Host = setup.GetStringVariable("ADDRESS", flagHost)
 
