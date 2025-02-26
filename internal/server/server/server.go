@@ -63,7 +63,7 @@ func Create(config *setup.ServerStartupValues) *CustomServer {
 
 	service := services.NewMetricService(store, config.StoreInterval, config.FileStoragePath)
 
-	db := db2.ConnectToDb(config.DatabaseDSN)
+	db := db2.ConnectToDB(config.DatabaseDSN)
 
 	server := NewCustomServer(router, store, config, service, db)
 	return server

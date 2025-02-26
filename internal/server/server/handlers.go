@@ -104,7 +104,7 @@ func (s *CustomServer) BadRequestHandler(res http.ResponseWriter, _ *http.Reques
 	http.Error(res, "URL не корректен", http.StatusBadRequest)
 }
 
-func (s *CustomServer) PingDbConnection(res http.ResponseWriter, _ *http.Request) {
+func (s *CustomServer) PingDBConnection(res http.ResponseWriter, _ *http.Request) {
 	dbPointer := s.GetDB()
 	if dbPointer == nil {
 		http.Error(res, "База данных не инициализирована", http.StatusInternalServerError)

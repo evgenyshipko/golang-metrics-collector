@@ -8,7 +8,7 @@ import (
 func (s *CustomServer) routes() {
 	s.router.Get("/", s.ShowAllMetricsHandler)
 
-	s.router.Get("/ping", s.PingDbConnection)
+	s.router.Get("/ping", s.PingDBConnection)
 
 	s.router.Route("/value", func(r chi.Router) {
 		r.With(m.SaveBodyToContext, m.ValidateName, m.ValidateType).Post("/", s.GetMetricDataHandler)

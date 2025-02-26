@@ -6,10 +6,10 @@ import (
 	_ "github.com/jackc/pgx/stdlib"
 )
 
-func ConnectToDb(serverDSN string) *sql.DB {
+func ConnectToDB(serverDSN string) *sql.DB {
 	db, err := sql.Open("pgx", serverDSN)
 	if err != nil {
-		logger.Instance.Warnw("ConnectToDb", "Не удалось подключиться к базе данных", err)
+		logger.Instance.Warnw("ConnectToDB", "Не удалось подключиться к базе данных", err)
 	}
 	return db
 }
