@@ -296,8 +296,6 @@ func TestRoutes(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 
-			values.DatabaseDSN = ""
-
 			server := Create(&values)
 
 			request := httptest.NewRequest(test.args.method, test.args.url, strings.NewReader(test.args.json))

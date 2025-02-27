@@ -34,8 +34,6 @@ func TestBadRequestHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			values.DatabaseDSN = ""
-
 			server := Create(&values)
 
 			request := httptest.NewRequest(http.MethodGet, "/", nil)
