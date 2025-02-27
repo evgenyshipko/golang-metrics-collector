@@ -14,7 +14,7 @@ type SQLStorage struct {
 	db *sql.DB
 }
 
-func NewSqlStorage(db *sql.DB) *SQLStorage {
+func NewSQLStorage(db *sql.DB) *SQLStorage {
 	return &SQLStorage{
 		db: db,
 	}
@@ -28,7 +28,7 @@ func (storage *SQLStorage) Get(metricType consts.Metric, name string) *consts.Va
 
 	err := row.Scan(&values.Counter, &values.Gauge)
 	if err != nil {
-		logger.Instance.Warnw("NewSqlStorage", "Get", err)
+		logger.Instance.Warnw("NewSQLStorage", "Get", err)
 		return &consts.Values{}
 	}
 
@@ -38,14 +38,14 @@ func (storage *SQLStorage) Get(metricType consts.Metric, name string) *consts.Va
 func (storage *SQLStorage) SetGauge(name string, value *float64) {
 	err := storage.insertData(name, consts.GAUGE, value, nil)
 	if err != nil {
-		logger.Instance.Warnw("NewSqlStorage", "SetGauge", err)
+		logger.Instance.Warnw("NewSQLStorage", "SetGauge", err)
 	}
 }
 
 func (storage *SQLStorage) SetCounter(name string, value *int64) {
 	err := storage.insertData(name, consts.COUNTER, nil, value)
 	if err != nil {
-		logger.Instance.Warnw("NewSqlStorage", "SetCounter", err)
+		logger.Instance.Warnw("NewSQLStorage", "SetCounter", err)
 	}
 }
 

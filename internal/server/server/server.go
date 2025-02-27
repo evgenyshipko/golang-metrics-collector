@@ -59,7 +59,7 @@ func Create(config *setup.ServerStartupValues) *CustomServer {
 
 	var store storage.Storage
 	if config.DatabaseDSN != "" {
-		store = storage.NewSqlStorage(db)
+		store = storage.NewSQLStorage(db)
 	} else {
 		store = storage.NewMemStorage()
 	}

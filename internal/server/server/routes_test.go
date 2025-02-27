@@ -15,7 +15,7 @@ import (
 	"testing"
 )
 
-func TestPostMetric(t *testing.T) {
+func TestRoutes(t *testing.T) {
 	type args struct {
 		method       string
 		url          string
@@ -295,6 +295,8 @@ func TestPostMetric(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+
+			values.DatabaseDSN = ""
 
 			server := Create(&values)
 
