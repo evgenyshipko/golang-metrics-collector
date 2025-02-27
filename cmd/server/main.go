@@ -23,7 +23,7 @@ func main() {
 
 	go customServer.Start()
 
-	go tasks.WriteMetricsToFileTask(values.StoreInterval, values.FileStoragePath, customServer.GetStoreData())
+	go tasks.WriteMetricsToFileTask(values.StoreInterval, values.FileStoragePath, customServer)
 
 	<-stopSignal
 

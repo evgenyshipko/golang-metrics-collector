@@ -5,7 +5,7 @@ import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
 )
 
-func ReadFromFile(fileName string, storage *storage.MemStorage) {
+func ReadFromFile(fileName string, storage storage.Storage) {
 	logger.Instance.Info("Читаем из файла")
 	consumer, err := NewConsumer(fileName)
 	if err != nil {

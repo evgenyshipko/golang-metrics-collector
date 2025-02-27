@@ -25,7 +25,7 @@ func NewTruncateProducer(filename string) (*Producer, error) {
 	}, nil
 }
 
-func (p *Producer) WriteData(event *storage.MemStorageData) error {
+func (p *Producer) WriteData(event *storage.StorageData) error {
 	data, err := json.Marshal(&event)
 	if err != nil {
 		return err
@@ -64,7 +64,7 @@ func NewConsumer(filename string) (*Consumer, error) {
 	}, nil
 }
 
-func (c *Consumer) ReadData() (*storage.MemStorageData, error) {
+func (c *Consumer) ReadData() (*storage.StorageData, error) {
 	// читаем данные до символа переноса строки
 	data, err := c.reader.ReadBytes('\n')
 	if err != nil {
@@ -72,7 +72,7 @@ func (c *Consumer) ReadData() (*storage.MemStorageData, error) {
 	}
 
 	// преобразуем данные из JSON-представления в структуру
-	event := storage.MemStorageData{}
+	event := storage.StorageData{}
 	err = json.Unmarshal(data, &event)
 	if err != nil {
 		return nil, err

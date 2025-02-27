@@ -13,12 +13,12 @@ type Service interface {
 }
 
 type MetricService struct {
-	store           *storage.MemStorage
+	store           storage.Storage
 	storeInterval   time.Duration
 	fileStoragePath string
 }
 
-func NewMetricService(store *storage.MemStorage, storeInterval time.Duration, fileStoragePath string) Service {
+func NewMetricService(store storage.Storage, storeInterval time.Duration, fileStoragePath string) Service {
 	return &MetricService{
 		store:           store,
 		storeInterval:   storeInterval,

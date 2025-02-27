@@ -17,7 +17,11 @@ func (s *MetricService) ProcessMetric(metricData c.MetricData) (c.MetricData, er
 
 	if s.storeInterval == 0 {
 		filePath := s.fileStoragePath
-		storeData := s.store.GetAll()
+		storeData, err := s.store.GetAll()
+		if err != nil {
+			return c.MetricData{}, err
+		}
+
 		files.WriteToFile(filePath, storeData)
 	}
 

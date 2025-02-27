@@ -5,7 +5,7 @@ import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
 )
 
-func WriteToFile(fileName string, data *storage.MemStorageData) {
+func WriteToFile(fileName string, data *storage.StorageData) {
 	logger.Instance.Info("Пишем метрики в файл")
 
 	producer, err := NewTruncateProducer(fileName)

@@ -85,7 +85,13 @@ func (s *CustomServer) GetMetricValueHandler(res http.ResponseWriter, req *http.
 }
 
 func (s *CustomServer) ShowAllMetricsHandler(res http.ResponseWriter, req *http.Request) {
-	jsonStorage, err := json.MarshalIndent(*s.store.GetAll(), "", "  ")
+	allMetrics, err := s.store.GetAll()
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	jsonStorage, err := json.MarshalIndent(*allMetrics, "", "  ")
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return

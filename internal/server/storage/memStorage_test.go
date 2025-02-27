@@ -57,7 +57,7 @@ func TestMemStorage_Set_MetricTypesCheck(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			storage := &MemStorage{
-				data: MemStorageData{},
+				data: StorageData{},
 			}
 
 			if tt.args.metricType == consts.GAUGE {
@@ -91,7 +91,7 @@ func TestMemStorage_Set_MetricTypesCheck(t *testing.T) {
 func TestMemStorage_Set_SaveGaugeMetricTwice(t *testing.T) {
 	t.Run("Передаем метрику gauge cо значением float64 2 раза - записывается последнее переданное значение и имеет тип float64", func(t *testing.T) {
 		storage := &MemStorage{
-			data: MemStorageData{},
+			data: StorageData{},
 		}
 
 		name := "test metric"
@@ -110,7 +110,7 @@ func TestMemStorage_Set_SaveGaugeMetricTwice(t *testing.T) {
 func TestMemStorage_Set_SaveCounterMetricTwice(t *testing.T) {
 	t.Run("Передаем метрику counter cо значением int64 2 раза - записывается сумма значений и имеет тип int64", func(t *testing.T) {
 		storage := &MemStorage{
-			data: MemStorageData{},
+			data: StorageData{},
 		}
 
 		name := "test metric"

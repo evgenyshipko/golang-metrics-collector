@@ -42,7 +42,7 @@ func (s *CustomServer) Routes() *chi.Mux {
 	return s.router
 }
 
-func (s *CustomServer) GetStoreData() *storage.MemStorageData {
+func (s *CustomServer) GetStoreData() (*storage.StorageData, error) {
 	return s.store.GetAll()
 }
 
@@ -55,15 +55,20 @@ func Create(config *setup.ServerStartupValues) *CustomServer {
 
 	router.Use(logging.LoggingHandlers)
 
-	store := storage.NewMemStorage()
+	db := db2.ConnectToDB(config.DatabaseDSN)
+
+	var store storage.Storage
+	if config.DatabaseDSN != "" {
+		store = storage.NewSqlStorage(db)
+	} else {
+		store = storage.NewMemStorage()
+	}
 
 	if config.Restore {
 		files.ReadFromFile(config.FileStoragePath, store)
 	}
 
 	service := services.NewMetricService(store, config.StoreInterval, config.FileStoragePath)
-
-	db := db2.ConnectToDB(config.DatabaseDSN)
 
 	server := NewCustomServer(router, store, config, service, db)
 	return server
@@ -87,7 +92,13 @@ func (s *CustomServer) ShutDown() {
 		logger.Instance.Warnw("httpServer.Shutdown", "Ошибка завершения сервера:", err)
 	}
 
-	files.WriteToFile(s.config.FileStoragePath, s.store.GetAll())
+	data, err := s.store.GetAll()
+	if err != nil {
+		logger.Instance.Warnw("ShutDown", "ошибка получения данных", err)
+		return
+	}
+
+	files.WriteToFile(s.config.FileStoragePath, data)
 
 	logger.Instance.Info("Сервер успешно завершён")
 }
