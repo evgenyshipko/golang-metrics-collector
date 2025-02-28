@@ -8,6 +8,7 @@ import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/go-resty/resty/v2"
+	"github.com/google/uuid"
 )
 
 func SendMetricBatch(domain string, data []consts.MetricData) error {
@@ -27,24 +28,26 @@ func SendMetricBatch(domain string, data []consts.MetricData) error {
 
 	client := resty.New()
 
+	requestId := uuid.New().String()
+
 	//ЗАПОМНИТЬ: resty автоматически добавляет заголовок "Accept-Encoding", "gzip" и распаковывает ответ если он пришел в gzip
 	resp, err := client.R().
 		SetBody(compressedBody).
 		SetHeader("Content-Encoding", "gzip").
 		SetHeader("Content-Type", "application/json").
+		SetHeader("x-request-id", requestId).
 		Post(url)
 
 	if resp.StatusCode() == 200 {
 		logger.Instance.Info("Метрики успешно отправлены")
 	}
 
+	var loggerFunc = logger.Instance.Infow
 	if err != nil {
-		logger.Instance.Errorw("SendMetric", "не удалось выполнить запрос", err)
+		loggerFunc = logger.Instance.Warnw
 	}
 
-	respBody := resp.Body()
-
-	logger.Instance.Infow("SendMetric Response", "url", url, "status", resp.Status(), "body", respBody)
+	loggerFunc("SendMetric Response", "requestId", requestId, "url", url, "status", resp.Status(), "body", resp.Body(), "err", err)
 
 	return nil
 }
