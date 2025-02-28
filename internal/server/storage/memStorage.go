@@ -78,7 +78,14 @@ func (storage *MemStorage) GetAll() (*StorageData, error) {
 	return &storage.data, nil
 }
 
-func (storage *MemStorage) SetData(data StorageData) error {
-	storage.data = data
+func (storage *MemStorage) SetData(storageData StorageData) error {
+	for _, data := range storageData {
+		if data.Counter != nil {
+			storage.SetCounter(data.Name, data.Counter)
+		}
+		if data.Gauge != nil {
+			storage.SetGauge(data.Name, data.Gauge)
+		}
+	}
 	return nil
 }
