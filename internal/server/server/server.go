@@ -12,6 +12,7 @@ import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/setup"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
 	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	"net/http"
 	"time"
 )
@@ -48,6 +49,8 @@ func (s *CustomServer) GetStoreData() (*storage.StorageData, error) {
 
 func Create(config *setup.ServerStartupValues) *CustomServer {
 	router := chi.NewRouter()
+
+	router.Use(middleware.RequestID)
 
 	router.Use(middlewares.GzipDecompress)
 
