@@ -10,6 +10,45 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
+func SendMetricBatch(domain string, data []consts.MetricData) error {
+	body, err := json.Marshal(data)
+	if err != nil {
+		logger.Instance.Warnw("SendMetric", "json.Marshal err", err)
+		return err
+	}
+
+	compressedBody, err := gzip.Compress(body)
+	if err != nil {
+		logger.Instance.Warnw("SendMetric", "compress err", err)
+		return err
+	}
+
+	url := fmt.Sprintf("http://%s/updates/", domain)
+
+	client := resty.New()
+
+	//ЗАПОМНИТЬ: resty автоматически добавляет заголовок "Accept-Encoding", "gzip" и распаковывает ответ если он пришел в gzip
+	resp, err := client.R().
+		SetBody(compressedBody).
+		SetHeader("Content-Encoding", "gzip").
+		SetHeader("Content-Type", "application/json").
+		Post(url)
+
+	if resp.StatusCode() == 200 {
+		logger.Instance.Info("Метрики успешно отправлены")
+	}
+
+	if err != nil {
+		logger.Instance.Errorf("SendMetric", "не удалось выполнить запрос", err)
+	}
+
+	respBody := resp.Body()
+
+	logger.Instance.Infow("SendMetric Response", "url", url, "status", resp.Status(), "body", respBody)
+
+	return nil
+}
+
 func SendMetric(domain string, metricType consts.Metric, name string, value interface{}) error {
 
 	requestData, err := converter.GenerateMetricData(metricType, name, value)
