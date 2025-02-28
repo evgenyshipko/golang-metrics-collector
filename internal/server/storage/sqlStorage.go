@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
+	"log"
 	"regexp"
 	"strconv"
 	"strings"
@@ -36,20 +37,27 @@ func (storage *SQLStorage) Get(metricType consts.Metric, name string) *consts.Va
 }
 
 func (storage *SQLStorage) SetGauge(name string, value *float64) {
-	err := storage.insertData(name, consts.GAUGE, value, nil)
+	err := storage.insertData(name, consts.GAUGE, value, nil, nil)
 	if err != nil {
 		logger.Instance.Warnw("NewSQLStorage", "SetGauge", err)
 	}
 }
 
 func (storage *SQLStorage) SetCounter(name string, value *int64) {
-	err := storage.insertData(name, consts.COUNTER, nil, value)
+	err := storage.insertData(name, consts.COUNTER, nil, value, nil)
 	if err != nil {
 		logger.Instance.Warnw("NewSQLStorage", "SetCounter", err)
 	}
 }
 
-func (storage *SQLStorage) insertData(name string, metricType consts.Metric, valueFloatPointer *float64, valueIntPointer *int64) error {
+type sqlExecutor interface {
+	Exec(query string, args ...interface{}) (sql.Result, error)
+	Query(query string, args ...interface{}) (*sql.Rows, error)
+	QueryRow(query string, args ...interface{}) *sql.Row
+	Prepare(query string) (*sql.Stmt, error)
+}
+
+func (storage *SQLStorage) insertData(name string, metricType consts.Metric, valueFloatPointer *float64, valueIntPointer *int64, tx *sql.Tx) error {
 
 	query := `
     INSERT INTO metrics (name, type, value_int, value_float)
@@ -57,7 +65,7 @@ func (storage *SQLStorage) insertData(name string, metricType consts.Metric, val
     ON CONFLICT (name, type) DO UPDATE 
     SET 
         value_int = CASE 
-            WHEN EXCLUDED.type = 'counter' THEN EXCLUDED.value_int 
+            WHEN EXCLUDED.type = 'counter' THEN metrics.value_int + EXCLUDED.value_int 
             ELSE metrics.value_int 
         END,
         value_float = CASE 
@@ -67,23 +75,48 @@ func (storage *SQLStorage) insertData(name string, metricType consts.Metric, val
 `
 	logger.Instance.Debug(debugQuery(query, name, metricType, valueIntPointer, valueFloatPointer))
 
-	_, err := storage.db.Exec(query, name, metricType, valueIntPointer, valueFloatPointer)
+	var sql sqlExecutor
+	if tx != nil {
+		sql = tx
+	} else {
+		sql = storage.db
+	}
 
+	stmt, err := sql.Prepare(query)
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(name, metricType, valueIntPointer, valueFloatPointer)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (storage *SQLStorage) SetData(data StorageData) {
-	for _, value := range data {
-		if value.Counter != nil {
-			storage.SetCounter(value.Name, value.Counter)
+func (storage *SQLStorage) SetData(data StorageData) error {
+	tx, err := storage.db.Begin()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer tx.Rollback()
+
+	for _, val := range data {
+		var metricType consts.Metric
+		if val.Counter != nil {
+			metricType = consts.COUNTER
+		} else if val.Gauge != nil {
+			metricType = consts.GAUGE
 		}
-		if value.Gauge != nil {
-			storage.SetGauge(value.Name, value.Gauge)
+
+		err := storage.insertData(val.Name, metricType, val.Gauge, val.Counter, tx)
+		if err != nil {
+			tx.Rollback()
+			return err
 		}
 	}
+
+	return tx.Commit()
 }
 
 func (storage *SQLStorage) GetAll() (*StorageData, error) {

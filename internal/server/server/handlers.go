@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
-	m "github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares"
+	m "github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares/update"
+	middlewares "github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares/updates"
 	"net/http"
 	"strconv"
 )
@@ -32,6 +33,23 @@ func (s *CustomServer) StoreMetricHandler(res http.ResponseWriter, req *http.Req
 
 	res.Header().Set("Content-Type", "application/json")
 	res.Write(bytes)
+}
+
+func (s *CustomServer) BatchStoreMetricHandler(res http.ResponseWriter, req *http.Request) {
+	metricData, err := middlewares.GetArrayMetricDataFromContext(req.Context())
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = s.service.ProcessMetricArr(metricData)
+	if err != nil {
+		logger.Instance.Warnw("StoreMetricHandler", "ProcessMetricArr", err)
+		http.Error(res, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	res.WriteHeader(http.StatusOK)
 }
 
 func (s *CustomServer) GetMetricDataHandler(res http.ResponseWriter, req *http.Request) {

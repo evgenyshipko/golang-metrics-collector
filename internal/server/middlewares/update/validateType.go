@@ -1,7 +1,7 @@
-package middlewares
+package update
 
 import (
-	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/validate"
 	"net/http"
 )
 
@@ -13,10 +13,9 @@ func ValidateType(next http.Handler) http.Handler {
 			return
 		}
 
-		metricType := metricData.MType
-
-		if metricType != consts.COUNTER && metricType != consts.GAUGE {
-			http.Error(w, "Неизвестный тип метрики", http.StatusBadRequest)
+		err = validate.Type(metricData)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		next.ServeHTTP(w, r)

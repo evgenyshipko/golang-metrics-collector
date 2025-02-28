@@ -14,5 +14,5 @@ type Storage interface {
 	GetAll() (*StorageData, error)
 	SetGauge(name string, value *float64)
 	SetCounter(name string, value *int64)
-	SetData(data StorageData)
+	SetData(data StorageData) error
 }

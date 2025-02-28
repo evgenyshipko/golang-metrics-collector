@@ -1,6 +1,7 @@
-package middlewares
+package update
 
 import (
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/validate"
 	"net/http"
 )
 
@@ -11,9 +12,9 @@ func ValidateName(next http.Handler) http.Handler {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-
-		if metricData.ID == "" {
-			http.Error(w, "Не было передано имя метрики", http.StatusNotFound)
+		err = validate.Name(metricData)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
 			return
 		}
 		next.ServeHTTP(w, r)

@@ -78,6 +78,7 @@ func (storage *MemStorage) GetAll() (*StorageData, error) {
 	return &storage.data, nil
 }
 
-func (storage *MemStorage) SetData(data StorageData) {
+func (storage *MemStorage) SetData(data StorageData) error {
 	storage.data = data
+	return nil
 }

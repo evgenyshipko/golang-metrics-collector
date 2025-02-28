@@ -10,6 +10,7 @@ type Service interface {
 	ProcessMetric(metricData c.MetricData) (c.MetricData, error)
 	GetMetricData(metricData c.MetricData) (c.MetricData, int, error)
 	GetMetricValue(metricData c.MetricData) (c.Values, int, error)
+	ProcessMetricArr(metricData []c.MetricData) error
 }
 
 type MetricService struct {

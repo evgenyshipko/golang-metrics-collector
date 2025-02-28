@@ -17,6 +17,9 @@ func ReadFromFile(fileName string, storage storage.Storage) {
 		logger.Instance.Warnw("ReadFromFile", "consumer.ReadData", err)
 		return
 	}
-	storage.SetData(*memStorageData)
+	err = storage.SetData(*memStorageData)
+	if err != nil {
+		logger.Instance.Warnw("ReadFromFile", "storage.SetData ошибка записи в хранилище", err)
+	}
 	logger.Instance.Infow("ReadFromFile", "Прочитано успешно", *memStorageData)
 }
