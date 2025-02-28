@@ -39,7 +39,7 @@ func SendMetricBatch(domain string, data []consts.MetricData) error {
 	}
 
 	if err != nil {
-		logger.Instance.Errorf("SendMetric", "не удалось выполнить запрос", err)
+		logger.Instance.Errorw("SendMetric", "не удалось выполнить запрос", err)
 	}
 
 	respBody := resp.Body()
@@ -85,7 +85,7 @@ func SendMetric(domain string, metricType consts.Metric, name string, value inte
 	}
 
 	if err != nil {
-		logger.Instance.Errorf("SendMetric", "не удалось выполнить запрос", err)
+		logger.Instance.Errorw("SendMetric", "не удалось выполнить запрос", err)
 	}
 
 	respBody := resp.Body()
