@@ -61,7 +61,7 @@ func (storage *SQLStorage) SetCounter(name string, value *int64) {
 	}
 }
 
-func (storage *SQLStorage) insertData(sqlInstance db.SqlExecutor, name string, metricType consts.Metric, valueFloatPointer *float64, valueIntPointer *int64) error {
+func (storage *SQLStorage) insertData(sqlInstance db.SQLExecutor, name string, metricType consts.Metric, valueFloatPointer *float64, valueIntPointer *int64) error {
 
 	query := `
     INSERT INTO metrics (name, type, value_int, value_float)

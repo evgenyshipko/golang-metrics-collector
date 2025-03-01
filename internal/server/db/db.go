@@ -47,7 +47,7 @@ func RunMigrations(db *sql.DB) error {
 	return nil
 }
 
-type SqlExecutor interface {
+type SQLExecutor interface {
 	Exec(query string, args ...interface{}) (sql.Result, error)
 	Query(query string, args ...interface{}) (*sql.Rows, error)
 	QueryRow(query string, args ...interface{}) *sql.Row
