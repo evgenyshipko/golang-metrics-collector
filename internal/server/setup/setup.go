@@ -43,7 +43,7 @@ func GetStartupValues(args []string) (ServerStartupValues, error) {
 
 	flagRestore := flagSet.Bool("r", true, "restore saved metrics from file or not")
 
-	// postgres://metrics:metrics@localhost:5433/metrics?sslmode=disable
+	// postgres://metrics:metrics@localhost:5433/metrics?sslmode=disable&connect_timeout=5
 	flagDatabaseDsn := flagSet.String("d", "", "database dsn")
 
 	// Парсим переданные аргументы

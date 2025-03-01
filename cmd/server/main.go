@@ -2,8 +2,10 @@ package main
 
 import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/files"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/server"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/setup"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/tasks"
 	"os"
 	"os/signal"
@@ -16,7 +18,17 @@ func main() {
 		logger.Instance.Fatalw("Аргументы не прошли валидацию", err)
 	}
 
-	customServer := server.Create(&values)
+	store, err := storage.NewStorage(values.DatabaseDSN)
+	if err != nil {
+		logger.Instance.Warnw("server.Create", "ошибка создания store", err)
+		return
+	}
+
+	if values.Restore {
+		files.ReadFromFile(values.FileStoragePath, store)
+	}
+
+	customServer := server.Create(&values, store)
 
 	stopSignal := make(chan os.Signal, 1)
 	signal.Notify(stopSignal, syscall.SIGINT, syscall.SIGTERM)
@@ -31,6 +43,6 @@ func main() {
 
 	defer func() {
 		logger.Sync()
-		customServer.GetDB().Close()
+		store.Close()
 	}()
 }

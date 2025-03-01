@@ -9,7 +9,30 @@ import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/go-resty/resty/v2"
 	"github.com/google/uuid"
+	"time"
 )
+
+var retryAfterFunc resty.RetryAfterFunc = func(c *resty.Client, r *resty.Response) (time.Duration, error) {
+	retryIntervals := []time.Duration{1 * time.Second, 3 * time.Second, 5 * time.Second}
+	attempt := r.Request.Attempt
+
+	if attempt <= len(retryIntervals) {
+		logger.Instance.Info(fmt.Sprintf("Попытка %d, ждем %v перед следующим запросом...\n", attempt, retryIntervals[attempt-1]))
+		return retryIntervals[attempt-1], nil
+	}
+
+	return 0, fmt.Errorf("превышено количество попыток")
+}
+
+var restyClient = resty.New().
+	SetRetryCount(3).
+	SetTimeout(10 * time.Second).
+	SetRetryWaitTime(1 * time.Second).
+	SetRetryMaxWaitTime(5 * time.Second).
+	SetRetryAfter(retryAfterFunc).
+	AddRetryCondition(func(r *resty.Response, err error) bool {
+		return err != nil // Повторяем только при сетевых ошибках
+	})
 
 func SendMetricBatch(domain string, data []consts.MetricData) error {
 	body, err := json.Marshal(data)
@@ -26,12 +49,10 @@ func SendMetricBatch(domain string, data []consts.MetricData) error {
 
 	url := fmt.Sprintf("http://%s/updates/", domain)
 
-	client := resty.New()
-
 	requestID := uuid.New().String()
 
 	//ЗАПОМНИТЬ: resty автоматически добавляет заголовок "Accept-Encoding", "gzip" и распаковывает ответ если он пришел в gzip
-	resp, err := client.R().
+	resp, err := restyClient.R().
 		SetBody(compressedBody).
 		SetHeader("Content-Encoding", "gzip").
 		SetHeader("Content-Type", "application/json").
@@ -74,10 +95,8 @@ func SendMetric(domain string, metricType consts.Metric, name string, value inte
 
 	url := fmt.Sprintf("http://%s/update/", domain)
 
-	client := resty.New()
-
 	//ЗАПОМНИТЬ: resty автоматически добавляет заголовок "Accept-Encoding", "gzip" и распаковывает ответ если он пришел в gzip
-	resp, err := client.R().
+	resp, err := restyClient.R().
 		SetBody(compressedBody).
 		SetHeader("Content-Encoding", "gzip").
 		SetHeader("Content-Type", "application/json").

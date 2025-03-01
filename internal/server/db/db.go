@@ -9,18 +9,19 @@ import (
 	_ "github.com/jackc/pgx/stdlib"
 )
 
-func ConnectToDB(serverDSN string) *sql.DB {
+func ConnectToDB(serverDSN string) (*sql.DB, error) {
 	db, err := sql.Open("pgx", serverDSN)
 	if err != nil {
 		logger.Instance.Warnw("ConnectToDB", "Не удалось подключиться к базе данных", err)
+		return nil, err
 	}
 
 	err = RunMigrations(db)
 	if err != nil {
-		logger.Instance.Warnw("RunMigrations", "Ошибка проката миграций", err)
+		return nil, err
 	}
 
-	return db
+	return db, nil
 }
 
 // TODO: по-хорошему не код приложения должен запускать матгации, а отдельная джоба. Запуск вызовет проблемы если сделать множество экземпляров сервера.
@@ -44,4 +45,11 @@ func RunMigrations(db *sql.DB) error {
 
 	logger.Instance.Info("Migrations applied successfully!")
 	return nil
+}
+
+type SqlExecutor interface {
+	Exec(query string, args ...interface{}) (sql.Result, error)
+	Query(query string, args ...interface{}) (*sql.Rows, error)
+	QueryRow(query string, args ...interface{}) *sql.Row
+	Prepare(query string) (*sql.Stmt, error)
 }

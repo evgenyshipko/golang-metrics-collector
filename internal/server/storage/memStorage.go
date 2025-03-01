@@ -89,3 +89,11 @@ func (storage *MemStorage) SetData(storageData StorageData) error {
 	}
 	return nil
 }
+
+func (storage *MemStorage) IsAvailable() bool {
+	return true
+}
+
+func (storage *MemStorage) Close() error {
+	return nil
+}

@@ -12,14 +12,14 @@ func ReadFromFile(fileName string, storage storage.Storage) {
 		logger.Instance.Warnw("ReadFromFile", "NewConsumer", err)
 		return
 	}
-	memStorageData, err := consumer.ReadData()
+	storageData, err := consumer.ReadData()
 	if err != nil {
 		logger.Instance.Warnw("ReadFromFile", "consumer.ReadData", err)
 		return
 	}
-	err = storage.SetData(*memStorageData)
+	err = storage.SetData(*storageData)
 	if err != nil {
 		logger.Instance.Warnw("ReadFromFile", "storage.SetData ошибка записи в хранилище", err)
 	}
-	logger.Instance.Infow("ReadFromFile", "Прочитано успешно", *memStorageData)
+	logger.Instance.Infow("ReadFromFile", "Прочитано успешно", *storageData)
 }

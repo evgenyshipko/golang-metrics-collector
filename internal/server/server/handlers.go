@@ -129,15 +129,8 @@ func (s *CustomServer) BadRequestHandler(res http.ResponseWriter, _ *http.Reques
 }
 
 func (s *CustomServer) PingDBConnection(res http.ResponseWriter, _ *http.Request) {
-	dbPointer := s.GetDB()
-	if dbPointer == nil {
-		http.Error(res, "База данных не инициализирована", http.StatusInternalServerError)
-		return
-	}
-
-	err := dbPointer.Ping()
-	if err != nil {
-		http.Error(res, err.Error(), http.StatusInternalServerError)
+	if !s.store.IsAvailable() {
+		http.Error(res, "store not available", http.StatusInternalServerError)
 		return
 	}
 

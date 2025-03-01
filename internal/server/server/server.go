@@ -2,9 +2,7 @@ package server
 
 import (
 	"context"
-	"database/sql"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
-	db2 "github.com/evgenyshipko/golang-metrics-collector/internal/server/db"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/files"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares/logging"
@@ -23,17 +21,15 @@ type CustomServer struct {
 	store   storage.Storage
 	config  *setup.ServerStartupValues
 	service services.Service
-	db      *sql.DB
 }
 
-func NewCustomServer(router *chi.Mux, store storage.Storage, config *setup.ServerStartupValues, service services.Service, db *sql.DB) *CustomServer {
+func NewCustomServer(router *chi.Mux, store storage.Storage, config *setup.ServerStartupValues, service services.Service) *CustomServer {
 	s := &CustomServer{
 		server:  http.Server{Addr: config.Host, Handler: router},
 		router:  router,
 		store:   store,
 		config:  config,
 		service: service,
-		db:      db,
 	}
 	s.routes()
 	return s
@@ -47,7 +43,7 @@ func (s *CustomServer) GetStoreData() (*storage.StorageData, error) {
 	return s.store.GetAll()
 }
 
-func Create(config *setup.ServerStartupValues) *CustomServer {
+func Create(config *setup.ServerStartupValues, store storage.Storage) *CustomServer {
 	router := chi.NewRouter()
 
 	router.Use(middleware.RequestID)
@@ -58,22 +54,9 @@ func Create(config *setup.ServerStartupValues) *CustomServer {
 
 	router.Use(logging.LoggingHandlers)
 
-	db := db2.ConnectToDB(config.DatabaseDSN)
-
-	var store storage.Storage
-	if config.DatabaseDSN != "" {
-		store = storage.NewSQLStorage(db)
-	} else {
-		store = storage.NewMemStorage()
-	}
-
-	if config.Restore {
-		files.ReadFromFile(config.FileStoragePath, store)
-	}
-
 	service := services.NewMetricService(store, config.StoreInterval, config.FileStoragePath)
 
-	server := NewCustomServer(router, store, config, service, db)
+	server := NewCustomServer(router, store, config, service)
 	return server
 }
 
@@ -104,8 +87,4 @@ func (s *CustomServer) ShutDown() {
 	files.WriteToFile(s.config.FileStoragePath, data)
 
 	logger.Instance.Info("Сервер успешно завершён")
-}
-
-func (s *CustomServer) GetDB() *sql.DB {
-	return s.db
 }
