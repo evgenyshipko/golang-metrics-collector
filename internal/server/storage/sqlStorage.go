@@ -77,7 +77,7 @@ func (storage *SQLStorage) insertData(sqlInstance db.SqlExecutor, name string, m
             ELSE metrics.value_float 
         END;
 `
-	logger.Instance.Debug(debugQuery(query, name, metricType, valueIntPointer, valueFloatPointer))
+	//logger.Instance.Debug(debugQuery(query, name, metricType, valueIntPointer, valueFloatPointer))
 
 	stmt, err := sqlInstance.Prepare(query)
 	if err != nil {

@@ -25,7 +25,7 @@ func main() {
 	}
 
 	if values.Restore {
-		files.ReadFromFile(values.FileStoragePath, store)
+		files.RecoverFromFile(values.FileStoragePath, store)
 	}
 
 	customServer := server.Create(&values, store)

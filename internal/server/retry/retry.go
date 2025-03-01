@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgerrcode"
 	"net"
 	"os"
+	"syscall"
 	"time"
 )
 
@@ -26,7 +27,7 @@ func WithRetry[T any](fn func() (T, error)) (T, error) {
 		}
 		logger.Instance.Warnw("WithRetry", "ошибка", err)
 
-		logger.Instance.Warnf("Попытка %d, ждем %s перед следующим запросом...\n", i+1, wait)
+		logger.Instance.Warnf("Попытка %d, ждем %s перед следующей попвткой вызова функции...\n", i+1, wait)
 		time.Sleep(wait)
 	}
 	return result, err
@@ -101,5 +102,21 @@ func isRetriableError(err error) bool {
 			return false
 		}
 	}
+
+	// Проверяем ошибки файловой системы
+	if errors.Is(err, os.ErrNotExist) || errors.Is(err, os.ErrPermission) {
+		logger.Instance.Infow("isRetriableError", "Ошибка файловой системы", err)
+		return true
+	}
+
+	// Проверяем системные ошибки (например, временные блокировки файла)
+	var errno syscall.Errno
+	if errors.As(err, &errno) {
+		if errno == syscall.EAGAIN || errno == syscall.EWOULDBLOCK {
+			logger.Instance.Infow("isRetriableError", "Файл временно заблокирован", err)
+			return true
+		}
+	}
+
 	return false
 }

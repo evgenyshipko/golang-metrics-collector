@@ -84,7 +84,10 @@ func (s *CustomServer) ShutDown() {
 		return
 	}
 
-	files.WriteToFile(s.config.FileStoragePath, data)
+	err = files.WriteToFileWithRetry(s.config.FileStoragePath, data)
+	if err != nil {
+		logger.Instance.Warnw("Не удалось записать в файл по завершению сервера", "Ошибка", err)
+	}
 
 	logger.Instance.Info("Сервер успешно завершён")
 }
