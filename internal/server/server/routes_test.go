@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/setup"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -296,7 +297,7 @@ func TestRoutes(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 
-			server := Create(&values)
+			server := Create(&values, &storage.MemStorage{})
 
 			request := httptest.NewRequest(test.args.method, test.args.url, strings.NewReader(test.args.json))
 			w := httptest.NewRecorder()
