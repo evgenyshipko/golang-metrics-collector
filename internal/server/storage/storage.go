@@ -26,7 +26,7 @@ type Storage interface {
 
 func NewStorage(cfg *setup.ServerStartupValues) (Storage, error) {
 	if cfg.DatabaseDSN != "" {
-		conn, err := db.ConnectToDB(cfg.DatabaseDSN)
+		conn, err := db.ConnectToDB(cfg.DatabaseDSN, cfg.AutoMigrations)
 		if err != nil {
 			return &MemStorage{}, err
 		}

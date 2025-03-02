@@ -17,6 +17,7 @@ type ServerStartupValues struct {
 	DatabaseDSN        string          `env:"DATABASE_DSN"`
 	RetryIntervals     []time.Duration `env:"RETRY_INTERVALS"`
 	RequestWaitTimeout time.Duration   `env:"REQUEST_WAIT_TIMEOUT"`
+	AutoMigrations     bool            `env:"AUTO_MIGRATIONS"`
 }
 
 func GetProjectRoot() string {
@@ -54,6 +55,8 @@ func GetStartupValues(args []string) (ServerStartupValues, error) {
 
 	flagRequestWaitTimeout := flagSet.Int("w", defaultRequestWaitTimeout, "http-request wait timeout")
 
+	flagAutoMigrations := flagSet.Bool("m", true, "run migrations on server startup")
+
 	// Парсим переданные аргументы
 	if err := flagSet.Parse(args); err != nil {
 		if err == flag.ErrHelp {
@@ -89,6 +92,8 @@ func GetStartupValues(args []string) (ServerStartupValues, error) {
 	}
 
 	cfg.RequestWaitTimeout = requestWaitTimeout
+
+	cfg.AutoMigrations = setup.GetBoolVariable("AUTO_MIGRATIONS", flagAutoMigrations)
 
 	logger.Instance.Infow("GetStartupValues", "Параметры запуска:", cfg)
 

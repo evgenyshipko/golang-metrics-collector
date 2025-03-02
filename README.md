@@ -28,7 +28,7 @@ goose -dir internal/server/db/migrations postgres "postgres://metrics:metrics@lo
 3. Run metrics collector (server)
 
 ```bash
-go run ./cmd/server -d="postgres://metrics:metrics@localhost:5433/metrics?sslmode=disable"
+go run ./cmd/server -d="postgres://metrics:metrics@localhost:5433/metrics?sslmode=disable" -m=false
 ```
 
 4. Run agent (source of metric values)
