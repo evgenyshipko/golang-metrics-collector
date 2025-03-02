@@ -18,14 +18,14 @@ func main() {
 		logger.Instance.Fatalw("Аргументы не прошли валидацию", err)
 	}
 
-	store, err := storage.NewStorage(values.DatabaseDSN)
+	store, err := storage.NewStorage(&values)
 	if err != nil {
 		logger.Instance.Warnw("server.Create", "ошибка создания store", err)
 		return
 	}
 
 	if values.Restore {
-		files.RecoverFromFile(values.FileStoragePath, store)
+		files.RecoverFromFile(values.FileStoragePath, store, values.RetryIntervals)
 	}
 
 	customServer := server.Create(&values, store)

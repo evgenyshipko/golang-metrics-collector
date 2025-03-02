@@ -14,7 +14,7 @@ import (
 func main() {
 	defer logger.Sync()
 
-	vars, err := setup.GetStartupValues()
+	vars, err := setup.GetStartupValues(os.Args[1:])
 	if err != nil {
 		logger.Instance.Fatalw("Аргументы не прошли валидацию", err)
 	}
@@ -26,7 +26,7 @@ func main() {
 
 	go tasks.CollectMetricsTask(vars.PollInterval, &metrics)
 
-	go tasks.SendMetricsTask(vars.ReportInterval, &metrics, vars.Host)
+	go tasks.SendMetricsTask(vars, &metrics)
 
 	// Ожидаем сигнала завершения
 	<-signalChan

@@ -3,10 +3,11 @@ package files
 import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
+	"time"
 )
 
-func RecoverFromFile(filePath string, store storage.Storage) {
-	fileData, err := ReadFromFileWithRetry(filePath)
+func RecoverFromFile(filePath string, store storage.Storage, retryIntervals []time.Duration) {
+	fileData, err := ReadFromFileWithRetry(filePath, retryIntervals)
 	if err != nil {
 		logger.Instance.Warnw("ReadFromFileWithRetry", "Ошибка чтения из файла", err)
 		return

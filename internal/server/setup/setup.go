@@ -2,7 +2,6 @@ package setup
 
 import (
 	"flag"
-	"fmt"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/setup"
 	"os"
@@ -11,11 +10,12 @@ import (
 )
 
 type ServerStartupValues struct {
-	Host            string        `env:"ADDRESS"`
-	StoreInterval   time.Duration `env:"STORE_INTERVAL"`
-	FileStoragePath string        `env:"FILE_STORAGE_PATH"`
-	Restore         bool          `env:"RESTORE"`
-	DatabaseDSN     string        `env:"DATABASE_DSN"`
+	Host            string          `env:"ADDRESS"`
+	StoreInterval   time.Duration   `env:"STORE_INTERVAL"`
+	FileStoragePath string          `env:"FILE_STORAGE_PATH"`
+	Restore         bool            `env:"RESTORE"`
+	DatabaseDSN     string          `env:"DATABASE_DSN"`
+	RetryIntervals  []time.Duration `env:"RETRY_INTERVALS"`
 }
 
 func GetProjectRoot() string {
@@ -46,6 +46,8 @@ func GetStartupValues(args []string) (ServerStartupValues, error) {
 	// postgres://metrics:metrics@localhost:5433/metrics?sslmode=disable&connect_timeout=5
 	flagDatabaseDsn := flagSet.String("d", "", "database dsn")
 
+	flagRetryIntervals := flagSet.String("ri", "1s,3s,5s", "intervals between retries")
+
 	// Парсим переданные аргументы
 	if err := flagSet.Parse(args); err != nil {
 		if err == flag.ErrHelp {
@@ -65,9 +67,15 @@ func GetStartupValues(args []string) (ServerStartupValues, error) {
 
 	storeInterval, err := setup.GetInterval("STORE_INTERVAL", flagStoreInterval, false)
 	if err != nil {
-		return ServerStartupValues{}, fmt.Errorf("%w", err)
+		return ServerStartupValues{}, err
 	}
 	cfg.StoreInterval = storeInterval
+
+	retries, err := setup.GetIntervals("RETRY_INTERVALS", flagRetryIntervals)
+	if err != nil {
+		return ServerStartupValues{}, err
+	}
+	cfg.RetryIntervals = retries
 
 	logger.Instance.Infow("GetStartupValues", "Параметры запуска:", cfg)
 

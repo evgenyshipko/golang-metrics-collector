@@ -6,6 +6,7 @@ import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/retry"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/setup"
 	"regexp"
 	"strconv"
 	"strings"
@@ -13,13 +14,15 @@ import (
 )
 
 type SQLStorage struct {
+	cfg        *setup.ServerStartupValues
 	db         *sql.DB
 	statements map[string]*sql.Stmt
 	mu         sync.RWMutex //ЗАПОМНИТЬ: мапа не потокобезопасна, поэтому при конкуррентном чтении/записи могут возникать ошибки конкуррентного доступа к данным
 }
 
-func NewSQLStorage(db *sql.DB) *SQLStorage {
+func NewSQLStorage(db *sql.DB, cfg *setup.ServerStartupValues) *SQLStorage {
 	return &SQLStorage{
+		cfg:        cfg,
 		db:         db,
 		statements: map[string]*sql.Stmt{},
 		mu:         sync.RWMutex{},
@@ -61,7 +64,7 @@ func (storage *SQLStorage) Get(metricType consts.Metric, name string) *consts.Va
 
 		err = row.Scan(&values.Counter, &values.Gauge)
 		return values, err
-	})
+	}, storage.cfg.RetryIntervals)
 
 	if err != nil {
 		logger.Instance.Warnw("NewSQLStorage", "Get", err)
@@ -75,7 +78,7 @@ func (storage *SQLStorage) SetGauge(name string, value *float64) {
 	_, err := retry.WithRetry(func() (string, error) {
 		innerErr := storage.insertData(nil, name, consts.GAUGE, value, nil)
 		return "", innerErr
-	})
+	}, storage.cfg.RetryIntervals)
 	if err != nil {
 		logger.Instance.Warnw("NewSQLStorage", "SetGauge", err)
 	}
@@ -85,7 +88,7 @@ func (storage *SQLStorage) SetCounter(name string, value *int64) {
 	_, err := retry.WithRetry(func() (string, error) {
 		innerErr := storage.insertData(nil, name, consts.COUNTER, nil, value)
 		return "", innerErr
-	})
+	}, storage.cfg.RetryIntervals)
 	if err != nil {
 		logger.Instance.Warnw("NewSQLStorage", "SetCounter", err)
 	}
@@ -149,7 +152,7 @@ func (storage *SQLStorage) SetData(data StorageData) error {
 			}
 		}
 		return nil
-	})
+	}, storage.cfg.RetryIntervals)
 
 	if err != nil {
 		return err
@@ -172,7 +175,7 @@ func (storage *SQLStorage) GetAll() (*StorageData, error) {
 		}
 
 		return stmt.Query()
-	})
+	}, storage.cfg.RetryIntervals)
 	if err != nil {
 		return nil, err
 	}

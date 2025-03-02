@@ -14,10 +14,8 @@ import (
 	"time"
 )
 
-func WithRetry[T any](fn func() (T, error)) (T, error) {
+func WithRetry[T any](fn func() (T, error), retryIntervals []time.Duration) (T, error) {
 	var result T
-	retryIntervals := []time.Duration{1 * time.Second, 3 * time.Second, 5 * time.Second}
-
 	var err error
 	for i, wait := range retryIntervals {
 		result, err = fn()
@@ -33,9 +31,7 @@ func WithRetry[T any](fn func() (T, error)) (T, error) {
 	return result, err
 }
 
-func ExecuteTransactionWithRetry(db *sql.DB, fn func(tx *sql.Tx) error) error {
-	retryIntervals := []time.Duration{1 * time.Second, 3 * time.Second, 5 * time.Second}
-
+func ExecuteTransactionWithRetry(db *sql.DB, fn func(tx *sql.Tx) error, retryIntervals []time.Duration) error {
 	for attempt, interval := range retryIntervals {
 
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second) // ⏳ Тайм-аут 3 секунды

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/converter"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/gzip"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/setup"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/go-resty/resty/v2"
@@ -12,37 +13,69 @@ import (
 	"time"
 )
 
-var retryAfterFunc resty.RetryAfterFunc = func(c *resty.Client, r *resty.Response) (time.Duration, error) {
-	retryIntervals := []time.Duration{1 * time.Second, 3 * time.Second, 5 * time.Second}
-	attempt := r.Request.Attempt
+var retryAfterFunc = func(retryIntervals []time.Duration) func(c *resty.Client, r *resty.Response) (time.Duration, error) {
 
-	if attempt <= len(retryIntervals) {
-		logger.Instance.Info(fmt.Sprintf("Попытка %d, ждем %v перед следующим запросом...\n", attempt, retryIntervals[attempt-1]))
-		return retryIntervals[attempt-1], nil
+	return func(c *resty.Client, r *resty.Response) (time.Duration, error) {
+		attempt := r.Request.Attempt
+
+		if attempt <= len(retryIntervals) {
+			logger.Instance.Info(fmt.Sprintf("Попытка %d, ждем %v перед следующим запросом...\n", attempt, retryIntervals[attempt-1]))
+			return retryIntervals[attempt-1], nil
+		}
+
+		return 0, fmt.Errorf("превышено количество попыток")
 	}
-
-	return 0, fmt.Errorf("превышено количество попыток")
 }
 
-var restyClient = resty.New().
-	SetRetryCount(3).
-	SetTimeout(10 * time.Second).
-	SetRetryWaitTime(1 * time.Second).
-	SetRetryMaxWaitTime(5 * time.Second).
-	SetRetryAfter(retryAfterFunc).
-	AddRetryCondition(func(r *resty.Response, err error) bool {
-		return err != nil // Повторяем только при сетевых ошибках
-	})
+type Requester struct {
+	client *resty.Client
+}
 
-func sendPostRequest(url string, body []byte, headers map[string]string) (*resty.Response, error) {
+func NewRequester(cfg setup.AgentStartupValues) *Requester {
+	var restyClient = resty.New().
+		SetRetryCount(len(cfg.RetryIntervals)).
+		SetTimeout(cfg.RequestWaitTimeout).
+		SetRetryWaitTime(minRetryDuration(cfg.RetryIntervals)).
+		SetRetryMaxWaitTime(maxRetryDuration(cfg.RetryIntervals)).
+		SetRetryAfter(retryAfterFunc(cfg.RetryIntervals)).
+		AddRetryCondition(func(r *resty.Response, err error) bool {
+			return err != nil // Повторяем только при сетевых ошибках
+		})
+
+	return &Requester{
+		client: restyClient,
+	}
+}
+
+func minRetryDuration(retryIntervals []time.Duration) time.Duration {
+	minimun := retryIntervals[0]
+	for _, interval := range retryIntervals {
+		if interval < minimun {
+			minimun = interval
+		}
+	}
+	return minimun
+}
+
+func maxRetryDuration(retryIntervals []time.Duration) time.Duration {
+	maximum := retryIntervals[0]
+	for _, interval := range retryIntervals {
+		if interval > maximum {
+			maximum = interval
+		}
+	}
+	return maximum
+}
+
+func (r *Requester) sendPostRequest(url string, body []byte, headers map[string]string) (*resty.Response, error) {
 	//ЗАПОМНИТЬ: resty автоматически добавляет заголовок "Accept-Encoding", "gzip" и распаковывает ответ если он пришел в gzip
-	return restyClient.R().
+	return r.client.R().
 		SetBody(body).
 		SetHeaders(headers).
 		Post(url)
 }
 
-func sendWithCompression(url string, data interface{}, headers map[string]string) (*resty.Response, error) {
+func (r *Requester) sendWithCompression(url string, data interface{}, headers map[string]string) (*resty.Response, error) {
 	body, err := json.Marshal(data)
 	if err != nil {
 		logger.Instance.Warnw("sendWithCompression", "json.Marshal err", err)
@@ -57,10 +90,10 @@ func sendWithCompression(url string, data interface{}, headers map[string]string
 		return &resty.Response{}, err
 	}
 
-	return sendPostRequest(url, compressedBody, headers)
+	return r.sendPostRequest(url, compressedBody, headers)
 }
 
-func SendMetricBatch(domain string, data []consts.MetricData) error {
+func (r *Requester) SendMetricBatch(domain string, data []consts.MetricData) error {
 	requestID := uuid.New().String()
 
 	headers := map[string]string{
@@ -70,7 +103,7 @@ func SendMetricBatch(domain string, data []consts.MetricData) error {
 
 	url := fmt.Sprintf("http://%s/updates/", domain)
 
-	resp, err := sendWithCompression(url, data, headers)
+	resp, err := r.sendWithCompression(url, data, headers)
 
 	if resp.StatusCode() == 200 {
 		logger.Instance.Info("Метрики успешно отправлены")
@@ -86,7 +119,7 @@ func SendMetricBatch(domain string, data []consts.MetricData) error {
 	return nil
 }
 
-func SendMetric(domain string, metricType consts.Metric, name string, value interface{}) error {
+func (r *Requester) SendMetric(domain string, metricType consts.Metric, name string, value interface{}) error {
 	requestData, err := converter.GenerateMetricData(metricType, name, value)
 	if err != nil {
 		logger.Instance.Warnw("SendMetric", "GenerateMetricData", err)
@@ -102,7 +135,7 @@ func SendMetric(domain string, metricType consts.Metric, name string, value inte
 
 	url := fmt.Sprintf("http://%s/update/", domain)
 
-	resp, err := sendWithCompression(url, requestData, headers)
+	resp, err := r.sendWithCompression(url, requestData, headers)
 
 	if resp.StatusCode() == 200 {
 		logger.Instance.Info("Метрики успешно отправлены")

@@ -3,6 +3,7 @@ package storage
 import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/db"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/setup"
 )
 
 type Data struct {
@@ -22,13 +23,13 @@ type Storage interface {
 	Close() error
 }
 
-func NewStorage(databaseDSN string) (Storage, error) {
-	if databaseDSN != "" {
-		conn, err := db.ConnectToDB(databaseDSN)
+func NewStorage(cfg *setup.ServerStartupValues) (Storage, error) {
+	if cfg.DatabaseDSN != "" {
+		conn, err := db.ConnectToDB(cfg.DatabaseDSN)
 		if err != nil {
 			return &MemStorage{}, err
 		}
-		return NewSQLStorage(conn), nil
+		return NewSQLStorage(conn, cfg), nil
 	} else {
 		return NewMemStorage(), nil
 	}

@@ -4,6 +4,7 @@ import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/retry"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
+	"time"
 )
 
 func ReadFromFile(fileName string) (*storage.StorageData, error) {
@@ -22,8 +23,8 @@ func ReadFromFile(fileName string) (*storage.StorageData, error) {
 	return storageData, nil
 }
 
-func ReadFromFileWithRetry(fileName string) (*storage.StorageData, error) {
+func ReadFromFileWithRetry(fileName string, retryIntervals []time.Duration) (*storage.StorageData, error) {
 	return retry.WithRetry(func() (*storage.StorageData, error) {
 		return ReadFromFile(fileName)
-	})
+	}, retryIntervals)
 }
