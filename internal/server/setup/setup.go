@@ -52,7 +52,7 @@ func GetStartupValues(args []string) (ServerStartupValues, error) {
 
 	flagRetryIntervals := flagSet.String("ri", "1s,3s,5s", "intervals between retries")
 
-	flagRequestWaitTimeout := flag.Int("w", defaultRequestWaitTimeout, "http-request wait timeout")
+	flagRequestWaitTimeout := flagSet.Int("w", defaultRequestWaitTimeout, "http-request wait timeout")
 
 	// Парсим переданные аргументы
 	if err := flagSet.Parse(args); err != nil {
