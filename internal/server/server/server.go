@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/files"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/server/httpServer"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/httpserver"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares/logging"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/services"
