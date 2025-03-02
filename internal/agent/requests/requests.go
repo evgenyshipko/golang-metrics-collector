@@ -34,30 +34,43 @@ var restyClient = resty.New().
 		return err != nil // Повторяем только при сетевых ошибках
 	})
 
-func SendMetricBatch(domain string, data []consts.MetricData) error {
+func sendPostRequest(url string, body []byte, headers map[string]string) (*resty.Response, error) {
+	//ЗАПОМНИТЬ: resty автоматически добавляет заголовок "Accept-Encoding", "gzip" и распаковывает ответ если он пришел в gzip
+	return restyClient.R().
+		SetBody(body).
+		SetHeaders(headers).
+		Post(url)
+}
+
+func sendWithCompression(url string, data interface{}, headers map[string]string) (*resty.Response, error) {
 	body, err := json.Marshal(data)
 	if err != nil {
-		logger.Instance.Warnw("SendMetric", "json.Marshal err", err)
-		return err
+		logger.Instance.Warnw("sendWithCompression", "json.Marshal err", err)
+		return &resty.Response{}, err
 	}
+
+	headers["Content-Encoding"] = "gzip"
 
 	compressedBody, err := gzip.Compress(body)
 	if err != nil {
-		logger.Instance.Warnw("SendMetric", "compress err", err)
-		return err
+		logger.Instance.Warnw("sendWithCompressionAndRequestId", "compress err", err)
+		return &resty.Response{}, err
+	}
+
+	return sendPostRequest(url, compressedBody, headers)
+}
+
+func SendMetricBatch(domain string, data []consts.MetricData) error {
+	requestID := uuid.New().String()
+
+	headers := map[string]string{
+		"Content-Type": "application/json",
+		"x-request-id": requestID,
 	}
 
 	url := fmt.Sprintf("http://%s/updates/", domain)
 
-	requestID := uuid.New().String()
-
-	//ЗАПОМНИТЬ: resty автоматически добавляет заголовок "Accept-Encoding", "gzip" и распаковывает ответ если он пришел в gzip
-	resp, err := restyClient.R().
-		SetBody(compressedBody).
-		SetHeader("Content-Encoding", "gzip").
-		SetHeader("Content-Type", "application/json").
-		SetHeader("x-request-id", requestID).
-		Post(url)
+	resp, err := sendWithCompression(url, data, headers)
 
 	if resp.StatusCode() == 200 {
 		logger.Instance.Info("Метрики успешно отправлены")
@@ -74,33 +87,22 @@ func SendMetricBatch(domain string, data []consts.MetricData) error {
 }
 
 func SendMetric(domain string, metricType consts.Metric, name string, value interface{}) error {
-
 	requestData, err := converter.GenerateMetricData(metricType, name, value)
 	if err != nil {
 		logger.Instance.Warnw("SendMetric", "GenerateMetricData", err)
 		return err
 	}
 
-	body, err := json.Marshal(requestData)
-	if err != nil {
-		logger.Instance.Warnw("SendMetric", "json.Marshal err", err)
-		return err
-	}
+	requestID := uuid.New().String()
 
-	compressedBody, err := gzip.Compress(body)
-	if err != nil {
-		logger.Instance.Warnw("SendMetric", "compress err", err)
-		return err
+	headers := map[string]string{
+		"Content-Type": "application/json",
+		"x-request-id": requestID,
 	}
 
 	url := fmt.Sprintf("http://%s/update/", domain)
 
-	//ЗАПОМНИТЬ: resty автоматически добавляет заголовок "Accept-Encoding", "gzip" и распаковывает ответ если он пришел в gzip
-	resp, err := restyClient.R().
-		SetBody(compressedBody).
-		SetHeader("Content-Encoding", "gzip").
-		SetHeader("Content-Type", "application/json").
-		Post(url)
+	resp, err := sendWithCompression(url, requestData, headers)
 
 	if resp.StatusCode() == 200 {
 		logger.Instance.Info("Метрики успешно отправлены")
@@ -112,7 +114,7 @@ func SendMetric(domain string, metricType consts.Metric, name string, value inte
 
 	respBody := resp.Body()
 
-	logger.Instance.Infow("SendMetric Response", "url", url, "status", resp.Status(), "body", respBody)
+	logger.Instance.Infow("SendMetric Response", "requestID", requestID, "url", url, "status", resp.Status(), "body", respBody)
 
 	return nil
 }
