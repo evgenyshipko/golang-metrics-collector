@@ -25,15 +25,15 @@ const (
 func GetStartupValues(args []string) (AgentStartupValues, error) {
 	flagSet := flag.NewFlagSet("config", flag.ContinueOnError)
 
-	flagHost := flag.String("a", "localhost:8080", "metric server host")
+	flagHost := flagSet.String("a", "localhost:8080", "metric server host")
 
-	flagReportInterval := flag.Int("r", defaultReportIntervalSeconds, "interval between report metrics")
+	flagReportInterval := flagSet.Int("r", defaultReportIntervalSeconds, "interval between report metrics")
 
-	flagPollInterval := flag.Int("p", defaultPollIntervalSeconds, "interval between polling metrics")
+	flagPollInterval := flagSet.Int("p", defaultPollIntervalSeconds, "interval between polling metrics")
 
-	flagRetryIntervals := flag.String("ri", "1s,3s,5s", "intervals between retries")
+	flagRetryIntervals := flagSet.String("ri", "1s,3s,5s", "intervals between retries")
 
-	flagRequestWaitTimeout := flag.Int("w", defaultRequestWaitTimeout, "http-request wait timeout")
+	flagRequestWaitTimeout := flagSet.Int("w", defaultRequestWaitTimeout, "http-request wait timeout")
 
 	// Парсим переданные аргументы
 	if err := flagSet.Parse(args); err != nil {

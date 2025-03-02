@@ -1,4 +1,4 @@
-package httpServer
+package httpserver
 
 import (
 	"context"
@@ -7,17 +7,17 @@ import (
 	"time"
 )
 
-type HttpServer struct {
+type HTTPServer struct {
 	server http.Server
 }
 
-func NewHttpServer(host string, handler http.Handler) *HttpServer {
-	return &HttpServer{
+func NewHTTPServer(host string, handler http.Handler) *HTTPServer {
+	return &HTTPServer{
 		server: http.Server{Addr: host, Handler: handler},
 	}
 }
 
-func (s *HttpServer) Start() error {
+func (s *HTTPServer) Start() error {
 	logger.Instance.Infow("SERVER STARTED!")
 	if err := s.server.ListenAndServe(); err != http.ErrServerClosed {
 		logger.Instance.Fatalw("httpServer.ListenAndServe", "Ошибка запуска сервера", err)
@@ -26,7 +26,7 @@ func (s *HttpServer) Start() error {
 	return nil
 }
 
-func (s *HttpServer) Stop() error {
+func (s *HTTPServer) Stop() error {
 	// Создаём контекст с таймаутом для корректного завершения
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

@@ -15,7 +15,7 @@ import (
 )
 
 type CustomServer struct {
-	server  *httpServer.HttpServer
+	server  *httpserver.HTTPServer
 	router  *chi.Mux
 	store   storage.Storage
 	config  *setup.ServerStartupValues
@@ -24,7 +24,7 @@ type CustomServer struct {
 
 func NewCustomServer(router *chi.Mux, store storage.Storage, config *setup.ServerStartupValues, service services.Service) *CustomServer {
 	s := &CustomServer{
-		server:  httpServer.NewHttpServer(config.Host, router),
+		server:  httpserver.NewHTTPServer(config.Host, router),
 		router:  router,
 		store:   store,
 		config:  config,
