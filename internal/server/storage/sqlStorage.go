@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/server/db"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/retry"
 	"regexp"
 	"strconv"
@@ -74,7 +73,7 @@ func (storage *SQLStorage) Get(metricType consts.Metric, name string) *consts.Va
 
 func (storage *SQLStorage) SetGauge(name string, value *float64) {
 	_, err := retry.WithRetry(func() (string, error) {
-		innerErr := storage.insertData(storage.db, name, consts.GAUGE, value, nil)
+		innerErr := storage.insertData(nil, name, consts.GAUGE, value, nil)
 		return "", innerErr
 	})
 	if err != nil {
@@ -84,7 +83,7 @@ func (storage *SQLStorage) SetGauge(name string, value *float64) {
 
 func (storage *SQLStorage) SetCounter(name string, value *int64) {
 	_, err := retry.WithRetry(func() (string, error) {
-		innerErr := storage.insertData(storage.db, name, consts.COUNTER, nil, value)
+		innerErr := storage.insertData(nil, name, consts.COUNTER, nil, value)
 		return "", innerErr
 	})
 	if err != nil {
@@ -92,7 +91,9 @@ func (storage *SQLStorage) SetCounter(name string, value *int64) {
 	}
 }
 
-func (storage *SQLStorage) insertData(sqlInstance db.SQLExecutor, name string, metricType consts.Metric, valueFloatPointer *float64, valueIntPointer *int64) error {
+func (storage *SQLStorage) insertData(tx *sql.Tx, name string, metricType consts.Metric, valueFloatPointer *float64, valueIntPointer *int64) error {
+
+	logger.Instance.Debugw("insertData", "tx", tx, "name", name, "metricType", metricType, "valueFloat", valueFloatPointer, "valueInt", valueIntPointer)
 
 	query := `
     INSERT INTO metrics (name, type, value_int, value_float)
@@ -108,7 +109,16 @@ func (storage *SQLStorage) insertData(sqlInstance db.SQLExecutor, name string, m
             ELSE metrics.value_float 
         END;
 `
-	//logger.Instance.Debug(debugQuery(query, name, metricType, valueIntPointer, valueFloatPointer))
+	logger.Instance.Debug(debugQuery(query, name, metricType, valueIntPointer, valueFloatPointer))
+
+	if tx != nil {
+		// если запрос в рамках транзакции, то тогда запрос не подготавливаем
+		_, err := tx.Exec(query, name, metricType, valueIntPointer, valueFloatPointer)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
 
 	stmt, err := storage.prepareStmt(query)
 	if err != nil {

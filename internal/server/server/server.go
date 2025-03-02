@@ -1,9 +1,9 @@
 package server
 
 import (
-	"context"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/files"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/httpServer"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares/logging"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/services"
@@ -11,12 +11,10 @@ import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-	"net/http"
-	"time"
 )
 
 type CustomServer struct {
-	server  http.Server
+	server  *httpServer.HttpServer
 	router  *chi.Mux
 	store   storage.Storage
 	config  *setup.ServerStartupValues
@@ -25,7 +23,7 @@ type CustomServer struct {
 
 func NewCustomServer(router *chi.Mux, store storage.Storage, config *setup.ServerStartupValues, service services.Service) *CustomServer {
 	s := &CustomServer{
-		server:  http.Server{Addr: config.Host, Handler: router},
+		server:  httpServer.NewHttpServer(config.Host, router),
 		router:  router,
 		store:   store,
 		config:  config,
@@ -33,10 +31,6 @@ func NewCustomServer(router *chi.Mux, store storage.Storage, config *setup.Serve
 	}
 	s.routes()
 	return s
-}
-
-func (s *CustomServer) Routes() *chi.Mux {
-	return s.router
 }
 
 func (s *CustomServer) GetStoreData() (*storage.StorageData, error) {
@@ -61,21 +55,18 @@ func Create(config *setup.ServerStartupValues, store storage.Storage) *CustomSer
 }
 
 func (s *CustomServer) Start() {
-	logger.Instance.Infow("SERVER STARTED!")
-	if err := s.server.ListenAndServe(); err != http.ErrServerClosed {
-		logger.Instance.Fatalw("httpServer.ListenAndServe", "Ошибка запуска сервера", err)
+	err := s.server.Start()
+	if err != nil {
+		logger.Instance.Warn("Failed to start server")
 	}
 }
 
 func (s *CustomServer) ShutDown() {
 	logger.Instance.Info("Завершение сервера...")
 
-	// Создаём контекст с таймаутом для корректного завершения
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if err := s.server.Shutdown(ctx); err != nil {
-		logger.Instance.Warnw("httpServer.Shutdown", "Ошибка завершения сервера:", err)
+	err := s.server.Stop()
+	if err != nil {
+		logger.Instance.Warnw("CustomServer.Shutdown", "Ошибка завершения сервера Stop()", err)
 	}
 
 	data, err := s.store.GetAll()
