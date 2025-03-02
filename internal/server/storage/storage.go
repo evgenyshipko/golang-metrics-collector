@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/db"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/setup"
@@ -14,12 +15,12 @@ type Data struct {
 type StorageData []Data
 
 type Storage interface {
-	Get(metricType consts.Metric, name string) *consts.Values
-	GetAll() (*StorageData, error)
-	SetGauge(name string, value *float64)
-	SetCounter(name string, value *int64)
-	SetData(data StorageData) error
-	IsAvailable() bool
+	Get(ctx context.Context, metricType consts.Metric, name string) *consts.Values
+	GetAll(ctx context.Context) (*StorageData, error)
+	SetGauge(ctx context.Context, name string, value *float64)
+	SetCounter(ctx context.Context, name string, value *int64)
+	SetData(ctx context.Context, data StorageData) error
+	IsAvailable(ctx context.Context) bool
 	Close() error
 }
 

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
@@ -11,13 +12,16 @@ import (
 )
 
 func (s *CustomServer) StoreMetricHandler(res http.ResponseWriter, req *http.Request) {
-	metricData, err := m.GetMetricDataFromContext(req.Context())
+	ctx, cancel := context.WithTimeout(req.Context(), s.config.RequestWaitTimeout)
+	defer cancel()
+
+	metricData, err := m.GetMetricDataFromContext(ctx)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	responseData, err := s.service.ProcessMetric(metricData)
+	responseData, err := s.service.ProcessMetric(ctx, metricData)
 	if err != nil {
 		logger.Instance.Warnw("StoreMetricHandler", "GenerateMetricData", err)
 		http.Error(res, err.Error(), http.StatusBadRequest)
@@ -36,13 +40,16 @@ func (s *CustomServer) StoreMetricHandler(res http.ResponseWriter, req *http.Req
 }
 
 func (s *CustomServer) BatchStoreMetricHandler(res http.ResponseWriter, req *http.Request) {
-	metricData, err := middlewares.GetArrayMetricDataFromContext(req.Context())
+	ctx, cancel := context.WithTimeout(req.Context(), s.config.RequestWaitTimeout)
+	defer cancel()
+
+	metricData, err := middlewares.GetArrayMetricDataFromContext(ctx)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	err = s.service.ProcessMetricArr(metricData)
+	err = s.service.ProcessMetricArr(ctx, metricData)
 	if err != nil {
 		logger.Instance.Warnw("StoreMetricHandler", "ProcessMetricArr", err)
 		http.Error(res, err.Error(), http.StatusBadRequest)
@@ -53,13 +60,16 @@ func (s *CustomServer) BatchStoreMetricHandler(res http.ResponseWriter, req *htt
 }
 
 func (s *CustomServer) GetMetricDataHandler(res http.ResponseWriter, req *http.Request) {
-	metricData, err := m.GetMetricDataFromContext(req.Context())
+	ctx, cancel := context.WithTimeout(req.Context(), s.config.RequestWaitTimeout)
+	defer cancel()
+
+	metricData, err := m.GetMetricDataFromContext(ctx)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	responseData, status, err := s.service.GetMetricData(metricData)
+	responseData, status, err := s.service.GetMetricData(ctx, metricData)
 	if err != nil {
 		logger.Instance.Warnw("GetMetricDataHandler", "GetMetricDataFromContext", err)
 		http.Error(res, err.Error(), status)
@@ -78,13 +88,16 @@ func (s *CustomServer) GetMetricDataHandler(res http.ResponseWriter, req *http.R
 }
 
 func (s *CustomServer) GetMetricValueHandler(res http.ResponseWriter, req *http.Request) {
-	metricData, err := m.GetMetricDataFromContext(req.Context())
+	ctx, cancel := context.WithTimeout(req.Context(), s.config.RequestWaitTimeout)
+	defer cancel()
+
+	metricData, err := m.GetMetricDataFromContext(ctx)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	value, status, err := s.service.GetMetricValue(metricData)
+	value, status, err := s.service.GetMetricValue(ctx, metricData)
 	if err != nil {
 		logger.Instance.Warnw("GetMetricDataHandler", "GetMetricValue", err)
 		http.Error(res, err.Error(), status)
@@ -103,7 +116,10 @@ func (s *CustomServer) GetMetricValueHandler(res http.ResponseWriter, req *http.
 }
 
 func (s *CustomServer) ShowAllMetricsHandler(res http.ResponseWriter, req *http.Request) {
-	allMetrics, err := s.store.GetAll()
+	ctx, cancel := context.WithTimeout(req.Context(), s.config.RequestWaitTimeout)
+	defer cancel()
+
+	allMetrics, err := s.store.GetAll(ctx)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
@@ -128,8 +144,11 @@ func (s *CustomServer) BadRequestHandler(res http.ResponseWriter, _ *http.Reques
 	http.Error(res, "URL не корректен", http.StatusBadRequest)
 }
 
-func (s *CustomServer) PingDBConnection(res http.ResponseWriter, _ *http.Request) {
-	if !s.store.IsAvailable() {
+func (s *CustomServer) PingDBConnection(res http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), s.config.RequestWaitTimeout)
+	defer cancel()
+
+	if !s.store.IsAvailable(ctx) {
 		http.Error(res, "store not available", http.StatusInternalServerError)
 		return
 	}

@@ -31,13 +31,8 @@ func WithRetry[T any](fn func() (T, error), retryIntervals []time.Duration) (T, 
 	return result, err
 }
 
-func ExecuteTransactionWithRetry(db *sql.DB, fn func(tx *sql.Tx) error, retryIntervals []time.Duration) error {
+func ExecuteTransactionWithRetry(ctx context.Context, db *sql.DB, fn func(tx *sql.Tx) error, retryIntervals []time.Duration) error {
 	for attempt, interval := range retryIntervals {
-
-		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second) // ⏳ Тайм-аут 3 секунды
-
-		defer cancel()
-
 		tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 		if err != nil {
 			logger.Instance.Warnw("ExecuteTransactionWithRetry", "ошибка создания транзакции", err)

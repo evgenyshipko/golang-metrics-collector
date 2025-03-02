@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/files"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/httpServer"
@@ -34,7 +35,7 @@ func NewCustomServer(router *chi.Mux, store storage.Storage, config *setup.Serve
 }
 
 func (s *CustomServer) GetStoreData() (*storage.StorageData, error) {
-	return s.store.GetAll()
+	return s.store.GetAll(context.Background())
 }
 
 func Create(config *setup.ServerStartupValues, store storage.Storage) *CustomServer {
@@ -69,7 +70,7 @@ func (s *CustomServer) ShutDown() {
 		logger.Instance.Warnw("CustomServer.Shutdown", "Ошибка завершения сервера Stop()", err)
 	}
 
-	data, err := s.store.GetAll()
+	data, err := s.store.GetAll(context.Background())
 	if err != nil {
 		logger.Instance.Warnw("ShutDown", "ошибка получения данных", err)
 		return
