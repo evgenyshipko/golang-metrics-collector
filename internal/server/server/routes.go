@@ -1,22 +1,27 @@
 package server
 
 import (
-	m "github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares/update"
+	middlewares "github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares/updates"
 	"github.com/go-chi/chi"
 )
 
 func (s *CustomServer) routes() {
 	s.router.Get("/", s.ShowAllMetricsHandler)
 
-	s.router.Route("/value", func(r chi.Router) {
-		r.With(m.SaveBodyToContext, m.ValidateName, m.ValidateType).Post("/", s.GetMetricDataHandler)
+	s.router.Get("/ping", s.PingDBConnection)
 
-		r.With(m.SaveURLParamsToContext, m.ValidateName, m.ValidateType).Get("/{metricType}/{metricName}", s.GetMetricValueHandler)
+	s.router.Route("/value", func(r chi.Router) {
+		r.With(update.SaveBodyToContext, update.ValidateName, update.ValidateType).Post("/", s.GetMetricDataHandler)
+
+		r.With(update.SaveURLParamsToContext, update.ValidateName, update.ValidateType).Get("/{metricType}/{metricName}", s.GetMetricValueHandler)
 	})
 
 	s.router.Route("/update", func(r chi.Router) {
-		r.With(m.SaveBodyToContext, m.ValidateName, m.ValidateType, m.ValidateValue).Post("/", s.StoreMetricHandler)
+		r.With(update.SaveBodyToContext, update.ValidateName, update.ValidateType, update.ValidateValue).Post("/", s.StoreMetricHandler)
 
-		r.With(m.SaveURLParamsToContext, m.ValidateName, m.ValidateType, m.ValidateValue).Post("/{metricType}/{metricName}/{metricValue}", s.StoreMetricHandler)
+		r.With(update.SaveURLParamsToContext, update.ValidateName, update.ValidateType, update.ValidateValue).Post("/{metricType}/{metricName}/{metricValue}", s.StoreMetricHandler)
 	})
+
+	s.router.With(middlewares.SaveBodyArrayToContext, middlewares.ValidateNameArr, middlewares.ValidateTypeArr, middlewares.ValidateValueArr).Post("/updates/", s.BatchStoreMetricHandler)
 }

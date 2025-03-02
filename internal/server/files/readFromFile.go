@@ -2,21 +2,28 @@ package files
 
 import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/retry"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
 )
 
-func ReadFromFile(fileName string, storage *storage.MemStorage) {
+func ReadFromFile(fileName string) (*storage.StorageData, error) {
 	logger.Instance.Info("Читаем из файла")
 	consumer, err := NewConsumer(fileName)
 	if err != nil {
 		logger.Instance.Warnw("ReadFromFile", "NewConsumer", err)
-		return
+		return nil, err
 	}
-	memStorageData, err := consumer.ReadData()
+	storageData, err := consumer.ReadData()
 	if err != nil {
 		logger.Instance.Warnw("ReadFromFile", "consumer.ReadData", err)
-		return
+		return nil, err
 	}
-	storage.SetData(*memStorageData)
-	logger.Instance.Infow("ReadFromFile", "Прочитано успешно", *memStorageData)
+	logger.Instance.Infow("ReadFromFile", "Прочитано успешно", *storageData)
+	return storageData, nil
+}
+
+func ReadFromFileWithRetry(fileName string) (*storage.StorageData, error) {
+	return retry.WithRetry(func() (*storage.StorageData, error) {
+		return ReadFromFile(fileName)
+	})
 }

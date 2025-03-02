@@ -1,13 +1,20 @@
 package tasks
 
 import (
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/files"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/server"
 	"time"
 )
 
-func WriteMetricsToFileTask(interval time.Duration, filePath string, data *storage.MemStorageData) {
+func WriteMetricsToFileTask(interval time.Duration, filePath string, server *server.CustomServer) {
 	if interval == 0 {
+		return
+	}
+
+	data, err := server.GetStoreData()
+	if err != nil {
+		logger.Instance.Warnw("GetStoreData", "не удалось получить данные", err)
 		return
 	}
 

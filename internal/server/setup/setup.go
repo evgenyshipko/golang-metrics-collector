@@ -15,15 +15,18 @@ type ServerStartupValues struct {
 	StoreInterval   time.Duration `env:"STORE_INTERVAL"`
 	FileStoragePath string        `env:"FILE_STORAGE_PATH"`
 	Restore         bool          `env:"RESTORE"`
+	DatabaseDSN     string        `env:"DATABASE_DSN"`
 }
 
 func GetProjectRoot() string {
 	dir, err := os.Getwd()
 	if err != nil {
-		panic(err)
+		logger.Instance.Fatal(err.Error())
 	}
 	return dir
 }
+
+const DefaultStoreIntervalSeconds = 300
 
 func GetStartupValues(args []string) (ServerStartupValues, error) {
 
@@ -34,11 +37,14 @@ func GetStartupValues(args []string) (ServerStartupValues, error) {
 
 	flagHost := flagSet.String("a", "localhost:8080", "input host with port")
 
-	flagStoreInterval := flagSet.Int("i", 300, "interval between saving metrics to file")
+	flagStoreInterval := flagSet.Int("i", DefaultStoreIntervalSeconds, "interval between saving metrics to file")
 
 	flagFileStoragePath := flagSet.String("f", defaultFilePath, "temp file to store metrics")
 
 	flagRestore := flagSet.Bool("r", true, "restore saved metrics from file or not")
+
+	// postgres://metrics:metrics@localhost:5433/metrics?sslmode=disable&connect_timeout=5
+	flagDatabaseDsn := flagSet.String("d", "", "database dsn")
 
 	// Парсим переданные аргументы
 	if err := flagSet.Parse(args); err != nil {
@@ -48,6 +54,8 @@ func GetStartupValues(args []string) (ServerStartupValues, error) {
 	}
 
 	var cfg ServerStartupValues
+
+	cfg.DatabaseDSN = setup.GetStringVariable("DATABASE_DSN", flagDatabaseDsn)
 
 	cfg.Host = setup.GetStringVariable("ADDRESS", flagHost)
 

@@ -14,12 +14,17 @@ type AgentStartupValues struct {
 	PollInterval   time.Duration `env:"POLL_INTERVAL"`
 }
 
+const (
+	defaultReportIntervalSeconds = 10
+	defaultPollIntervalSeconds   = 2
+)
+
 func GetStartupValues() (AgentStartupValues, error) {
 	flagHost := flag.String("a", "localhost:8080", "metric server host")
 
-	flagReportInterval := flag.Int("r", 10, "interval between report metrics")
+	flagReportInterval := flag.Int("r", defaultReportIntervalSeconds, "interval between report metrics")
 
-	flagPollInterval := flag.Int("p", 2, "interval between polling metrics")
+	flagPollInterval := flag.Int("p", defaultPollIntervalSeconds, "interval between polling metrics")
 
 	flag.Parse()
 
