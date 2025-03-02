@@ -10,26 +10,57 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 type SQLStorage struct {
-	db *sql.DB
+	db         *sql.DB
+	statements map[string]*sql.Stmt
+	mu         sync.RWMutex //ЗАПОМНИТЬ: мапа не потокобезопасна, поэтому при конкуррентном чтении/записи могут возникать ошибки конкуррентного доступа к данным
 }
 
 func NewSQLStorage(db *sql.DB) *SQLStorage {
 	return &SQLStorage{
-		db: db,
+		db:         db,
+		statements: map[string]*sql.Stmt{},
+		mu:         sync.RWMutex{},
 	}
+}
+
+func (storage *SQLStorage) prepareStmt(query string) (*sql.Stmt, error) {
+	storage.mu.RLock() // Блокируем только для чтения
+	stmt, exists := storage.statements[query]
+	storage.mu.RUnlock() // Разблокируем чтение
+	if exists {
+		return stmt, nil
+	}
+
+	storage.mu.Lock()         // Блокируем на запись
+	defer storage.mu.Unlock() // Разблокируем запись
+
+	stmt, err := storage.db.Prepare(query)
+	if err != nil {
+		return nil, err
+	}
+	storage.statements[query] = stmt
+	return stmt, nil
 }
 
 func (storage *SQLStorage) Get(metricType consts.Metric, name string) *consts.Values {
 	values, err := retry.WithRetry(func() (consts.Values, error) {
 
-		row := storage.db.QueryRow("SELECT value_int, value_float FROM metrics WHERE name = $1 AND type = $2", name, metricType)
+		query := "SELECT value_int, value_float FROM metrics WHERE name = $1 AND type = $2"
+
+		stmt, err := storage.prepareStmt(query)
+		if err != nil {
+			return consts.Values{}, err
+		}
+
+		row := stmt.QueryRow(name, metricType)
 
 		var values consts.Values
 
-		err := row.Scan(&values.Counter, &values.Gauge)
+		err = row.Scan(&values.Counter, &values.Gauge)
 		return values, err
 	})
 
@@ -79,7 +110,7 @@ func (storage *SQLStorage) insertData(sqlInstance db.SQLExecutor, name string, m
 `
 	//logger.Instance.Debug(debugQuery(query, name, metricType, valueIntPointer, valueFloatPointer))
 
-	stmt, err := sqlInstance.Prepare(query)
+	stmt, err := storage.prepareStmt(query)
 	if err != nil {
 		return err
 	}
@@ -122,7 +153,15 @@ func (storage *SQLStorage) GetAll() (*StorageData, error) {
 	metrics := StorageData{}
 
 	rows, err := retry.WithRetry(func() (*sql.Rows, error) {
-		return storage.db.Query("SELECT name, value_int, value_float from metrics")
+
+		query := "SELECT name, value_int, value_float from metrics"
+
+		stmt, err := storage.prepareStmt(query)
+		if err != nil {
+			return nil, err
+		}
+
+		return stmt.Query()
 	})
 	if err != nil {
 		return nil, err
