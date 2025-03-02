@@ -2,49 +2,28 @@ package db
 
 import (
 	"database/sql"
+	"embed"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
-	"github.com/golang-migrate/migrate"
-	"github.com/golang-migrate/migrate/database/postgres"
-	_ "github.com/golang-migrate/migrate/source/file"
 	_ "github.com/jackc/pgx/stdlib"
+	"github.com/pressly/goose/v3"
 )
 
-func ConnectToDB(serverDSN string) (*sql.DB, error) {
+func ConnectToDB(serverDSN string, autoMigrations bool) (*sql.DB, error) {
 	db, err := sql.Open("pgx", serverDSN)
 	if err != nil {
 		logger.Instance.Warnw("ConnectToDB", "Не удалось подключиться к базе данных", err)
 		return nil, err
 	}
 
-	err = RunMigrations(db)
-	if err != nil {
-		return nil, err
+	if autoMigrations {
+		err = RunMigrations(db)
+		if err != nil {
+			logger.Instance.Warnw("RunMigrations", "Ошибка проката миграций", err)
+			return nil, err
+		}
 	}
 
 	return db, nil
-}
-
-// TODO: по-хорошему не код приложения должен запускать матгации, а отдельная джоба. Запуск вызовет проблемы если сделать множество экземпляров сервера.
-func RunMigrations(db *sql.DB) error {
-
-	driver, err := postgres.WithInstance(db, &postgres.Config{})
-	if err != nil {
-		return err
-	}
-
-	m, err := migrate.NewWithDatabaseInstance(
-		"file://internal/server/db/migrations",
-		"postgres", driver)
-	if err != nil {
-		return err
-	}
-
-	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
-		return err
-	}
-
-	logger.Instance.Info("Migrations applied successfully!")
-	return nil
 }
 
 type SQLExecutor interface {
@@ -52,4 +31,24 @@ type SQLExecutor interface {
 	Query(query string, args ...interface{}) (*sql.Rows, error)
 	QueryRow(query string, args ...interface{}) *sql.Row
 	Prepare(query string) (*sql.Stmt, error)
+}
+
+//go:embed migrations/*.sql
+var embedMigrations embed.FS
+
+func RunMigrations(db *sql.DB) error {
+
+	goose.SetBaseFS(embedMigrations)
+
+	if err := goose.SetDialect("postgres"); err != nil {
+		return err
+	}
+
+	if err := goose.Up(db, "migrations"); err != nil {
+		return err
+	}
+
+	logger.Instance.Info("Миграции сработали успешно")
+
+	return nil
 }

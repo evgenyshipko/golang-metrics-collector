@@ -14,7 +14,7 @@ type ContextKey string
 
 const MetricDataArrayKey ContextKey = "metricDataArray"
 
-func SaveBodyArrayToContext(next http.Handler) http.Handler {
+func SaveMetricsToContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 
 		var metricData []c.MetricData
@@ -31,7 +31,7 @@ func SaveBodyArrayToContext(next http.Handler) http.Handler {
 			return
 		}
 
-		logger.Instance.Debugw("SaveBodyArrayToContext", "metricData", metricData)
+		logger.Instance.Debugw("SaveMetricsToContext", "metricData", metricData)
 
 		ctx := context.WithValue(req.Context(), MetricDataArrayKey, metricData)
 
