@@ -3,6 +3,7 @@ package logging
 import (
 	"bytes"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares/utils"
 	"github.com/go-chi/chi/middleware"
 	"io"
 	"net/http"
@@ -25,6 +26,13 @@ func LoggingHandlers(h http.Handler) http.Handler {
 				// Восстанавливаем r.Body, чтобы обработчики могли его использовать
 				r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 			}
+		}
+
+		requestBody, err := utils.GetBodyAndRestore(r)
+		if err != nil {
+			logger.Instance.Warnw("GetBodyAndRestore", "err", err)
+			http.Error(w, "GetBodyAndRestore ошибка", http.StatusBadRequest)
+			return
 		}
 
 		loggerFunc := logger.Instance.Infow

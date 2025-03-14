@@ -49,6 +49,8 @@ func Create(config *setup.ServerStartupValues, store storage.Storage) *CustomSer
 
 	router.Use(logging.LoggingHandlers)
 
+	router.Use(middlewares.ValidateSHA256(config.HashKey))
+
 	service := services.NewMetricService(store, config.StoreInterval, config.FileStoragePath)
 
 	server := NewCustomServer(router, store, config, service)

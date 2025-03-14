@@ -3,6 +3,7 @@ package requests
 import (
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/converter"
@@ -89,7 +90,7 @@ func (r *Requester) sendWithCompression(url string, data interface{}, headers ma
 	if hashKey != "" {
 		h := hmac.New(sha256.New, []byte(hashKey))
 		h.Write(body)
-		headers["HashSHA256"] = string(h.Sum(nil))
+		headers["HashSHA256"] = hex.EncodeToString(h.Sum(nil))
 	}
 
 	headers["Content-Encoding"] = "gzip"

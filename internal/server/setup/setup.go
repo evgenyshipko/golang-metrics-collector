@@ -18,6 +18,7 @@ type ServerStartupValues struct {
 	RetryIntervals     []time.Duration `env:"RETRY_INTERVALS"`
 	RequestWaitTimeout time.Duration   `env:"REQUEST_WAIT_TIMEOUT"`
 	AutoMigrations     bool            `env:"AUTO_MIGRATIONS"`
+	HashKey            string          `env:"KEY"`
 }
 
 func GetProjectRoot() string {
@@ -57,6 +58,8 @@ func GetStartupValues(args []string) (ServerStartupValues, error) {
 
 	flagAutoMigrations := flagSet.Bool("m", true, "run migrations on server startup")
 
+	flagHashKey := flagSet.String("k", "", "secret used to hash metrics")
+
 	// Парсим переданные аргументы
 	if err := flagSet.Parse(args); err != nil {
 		if err == flag.ErrHelp {
@@ -65,6 +68,8 @@ func GetStartupValues(args []string) (ServerStartupValues, error) {
 	}
 
 	var cfg ServerStartupValues
+
+	cfg.HashKey = setup.GetStringVariable("KEY", flagHashKey)
 
 	cfg.DatabaseDSN = setup.GetStringVariable("DATABASE_DSN", flagDatabaseDsn)
 
