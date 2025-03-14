@@ -47,7 +47,11 @@ func ExecuteTransactionWithRetry(ctx context.Context, db *sql.DB, fn func(tx *sq
 		err = fn(tx)
 		if err != nil {
 			logger.Instance.Warnw("ExecuteTransactionWithRetry", "ошибка функции", err)
-			tx.Rollback()
+			err1 := tx.Rollback()
+			if err1 != nil {
+				logger.Instance.Warnw("ExecuteTransactionWithRetry ошибка роллбэка транзакции", "err1", err1)
+				return err1
+			}
 			if isRetriableError(err) {
 				logger.Instance.Warnf("ExecuteTransactionWithRetry Попытка %d не удалась, ждем %s перед повтором...", attempt+1, interval)
 				time.Sleep(interval)

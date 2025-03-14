@@ -14,6 +14,7 @@ type AgentStartupValues struct {
 	PollInterval       time.Duration   `env:"POLL_INTERVAL"`
 	RetryIntervals     []time.Duration `env:"RETRY_INTERVALS"`
 	RequestWaitTimeout time.Duration   `env:"REQUEST_WAIT_TIMEOUT"`
+	HashKey            string          `env:"KEY"`
 }
 
 const (
@@ -35,6 +36,8 @@ func GetStartupValues(args []string) (AgentStartupValues, error) {
 
 	flagRequestWaitTimeout := flagSet.Int("w", defaultRequestWaitTimeout, "http-request wait timeout")
 
+	flagHashKey := flagSet.String("k", "", "secret used to hash metrics")
+
 	// Парсим переданные аргументы
 	if err := flagSet.Parse(args); err != nil {
 		if err == flag.ErrHelp {
@@ -43,6 +46,8 @@ func GetStartupValues(args []string) (AgentStartupValues, error) {
 	}
 
 	var cfg AgentStartupValues
+
+	cfg.HashKey = setup.GetStringVariable("KEY", flagHashKey)
 
 	cfg.Host = setup.GetStringVariable("ADDRESS", flagHost)
 

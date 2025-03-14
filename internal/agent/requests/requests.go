@@ -1,6 +1,8 @@
 package requests
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/converter"
@@ -28,7 +30,8 @@ var retryAfterFunc = func(retryIntervals []time.Duration) func(c *resty.Client, 
 }
 
 type Requester struct {
-	client *resty.Client
+	client  *resty.Client
+	hashKey string
 }
 
 func NewRequester(cfg setup.AgentStartupValues) *Requester {
@@ -43,7 +46,8 @@ func NewRequester(cfg setup.AgentStartupValues) *Requester {
 		})
 
 	return &Requester{
-		client: restyClient,
+		client:  restyClient,
+		hashKey: cfg.HashKey,
 	}
 }
 
@@ -75,11 +79,17 @@ func (r *Requester) sendPostRequest(url string, body []byte, headers map[string]
 		Post(url)
 }
 
-func (r *Requester) sendWithCompression(url string, data interface{}, headers map[string]string) (*resty.Response, error) {
+func (r *Requester) sendWithCompression(url string, data interface{}, headers map[string]string, hashKey string) (*resty.Response, error) {
 	body, err := json.Marshal(data)
 	if err != nil {
 		logger.Instance.Warnw("sendWithCompression", "json.Marshal err", err)
 		return &resty.Response{}, err
+	}
+
+	if hashKey != "" {
+		h := hmac.New(sha256.New, []byte(hashKey))
+		h.Write(body)
+		headers["HashSHA256"] = string(h.Sum(nil))
 	}
 
 	headers["Content-Encoding"] = "gzip"
@@ -103,7 +113,7 @@ func (r *Requester) SendMetricBatch(domain string, data []consts.MetricData) err
 
 	url := fmt.Sprintf("http://%s/updates/", domain)
 
-	resp, err := r.sendWithCompression(url, data, headers)
+	resp, err := r.sendWithCompression(url, data, headers, r.hashKey)
 
 	if resp.StatusCode() == 200 {
 		logger.Instance.Info("Метрики успешно отправлены")
@@ -135,7 +145,7 @@ func (r *Requester) SendMetric(domain string, metricType consts.Metric, name str
 
 	url := fmt.Sprintf("http://%s/update/", domain)
 
-	resp, err := r.sendWithCompression(url, requestData, headers)
+	resp, err := r.sendWithCompression(url, requestData, headers, r.hashKey)
 
 	if resp.StatusCode() == 200 {
 		logger.Instance.Info("Метрики успешно отправлены")
