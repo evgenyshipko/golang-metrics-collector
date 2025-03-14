@@ -15,6 +15,8 @@ func ValidateSHA256(hashKey string) func(next http.Handler) http.Handler {
 
 			hashFromHeader := r.Header.Get(`HashSHA256`)
 
+			var hashPointer *string
+
 			if hashFromHeader != "" && hashKey != "" && r.Body != nil && r.Body != http.NoBody {
 
 				requestBody, err := utils.GetBodyAndRestore(r)
@@ -33,9 +35,16 @@ func ValidateSHA256(hashKey string) func(next http.Handler) http.Handler {
 					http.Error(w, "отказано в доступе", http.StatusForbidden)
 					return
 				}
+
+				hashPointer = &hash
 			}
 
 			next.ServeHTTP(w, r)
+
+			if hashPointer != nil {
+				w.Header().Set("HashSHA256", *hashPointer)
+				logger.Instance.Infow("ValidateSHA256", "Requiest Headers", w.Header())
+			}
 		})
 	}
 }
