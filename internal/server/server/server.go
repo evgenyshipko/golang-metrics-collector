@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/files"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/httpserver"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares/logging"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/services"
@@ -11,12 +12,10 @@ import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-	"net/http"
-	"time"
 )
 
 type CustomServer struct {
-	server  http.Server
+	server  *httpserver.HTTPServer
 	router  *chi.Mux
 	store   storage.Storage
 	config  *setup.ServerStartupValues
@@ -25,7 +24,7 @@ type CustomServer struct {
 
 func NewCustomServer(router *chi.Mux, store storage.Storage, config *setup.ServerStartupValues, service services.Service) *CustomServer {
 	s := &CustomServer{
-		server:  http.Server{Addr: config.Host, Handler: router},
+		server:  httpserver.NewHTTPServer(config.Host, router),
 		router:  router,
 		store:   store,
 		config:  config,
@@ -35,12 +34,8 @@ func NewCustomServer(router *chi.Mux, store storage.Storage, config *setup.Serve
 	return s
 }
 
-func (s *CustomServer) Routes() *chi.Mux {
-	return s.router
-}
-
 func (s *CustomServer) GetStoreData() (*storage.StorageData, error) {
-	return s.store.GetAll()
+	return s.store.GetAll(context.Background())
 }
 
 func Create(config *setup.ServerStartupValues, store storage.Storage) *CustomServer {
@@ -54,6 +49,8 @@ func Create(config *setup.ServerStartupValues, store storage.Storage) *CustomSer
 
 	router.Use(logging.LoggingHandlers)
 
+	router.Use(middlewares.ValidateSHA256(config.HashKey))
+
 	service := services.NewMetricService(store, config.StoreInterval, config.FileStoragePath)
 
 	server := NewCustomServer(router, store, config, service)
@@ -61,30 +58,27 @@ func Create(config *setup.ServerStartupValues, store storage.Storage) *CustomSer
 }
 
 func (s *CustomServer) Start() {
-	logger.Instance.Infow("SERVER STARTED!")
-	if err := s.server.ListenAndServe(); err != http.ErrServerClosed {
-		logger.Instance.Fatalw("httpServer.ListenAndServe", "Ошибка запуска сервера", err)
+	err := s.server.Start()
+	if err != nil {
+		logger.Instance.Warn("Failed to start server")
 	}
 }
 
 func (s *CustomServer) ShutDown() {
 	logger.Instance.Info("Завершение сервера...")
 
-	// Создаём контекст с таймаутом для корректного завершения
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if err := s.server.Shutdown(ctx); err != nil {
-		logger.Instance.Warnw("httpServer.Shutdown", "Ошибка завершения сервера:", err)
+	err := s.server.Stop()
+	if err != nil {
+		logger.Instance.Warnw("CustomServer.Shutdown", "Ошибка завершения сервера Stop()", err)
 	}
 
-	data, err := s.store.GetAll()
+	data, err := s.store.GetAll(context.Background())
 	if err != nil {
 		logger.Instance.Warnw("ShutDown", "ошибка получения данных", err)
 		return
 	}
 
-	err = files.WriteToFileWithRetry(s.config.FileStoragePath, data)
+	err = files.WriteToFileWithRetry(s.config.FileStoragePath, data, s.config.RetryIntervals)
 	if err != nil {
 		logger.Instance.Warnw("Не удалось записать в файл по завершению сервера", "Ошибка", err)
 	}

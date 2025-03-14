@@ -1,3 +1,5 @@
+-- +goose Up
+-- +goose StatementBegin
 CREATE TABLE metrics (
                          id SERIAL PRIMARY KEY,
                          name TEXT NOT NULL,
@@ -10,3 +12,9 @@ CREATE TABLE metrics (
                              ),
                          UNIQUE (name, type)
 );
+-- +goose StatementEnd
+
+-- +goose Down
+-- +goose StatementBegin
+DROP TABLE metrics;
+-- +goose StatementEnd

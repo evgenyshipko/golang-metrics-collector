@@ -1,37 +1,71 @@
 package storage
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/server/db"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/retry"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/setup"
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 type SQLStorage struct {
-	db *sql.DB
+	cfg        *setup.ServerStartupValues
+	db         *sql.DB
+	statements map[string]*sql.Stmt
+	mu         sync.RWMutex //ЗАПОМНИТЬ: мапа не потокобезопасна, поэтому при конкуррентном чтении/записи могут возникать ошибки конкуррентного доступа к данным
 }
 
-func NewSQLStorage(db *sql.DB) *SQLStorage {
+func NewSQLStorage(db *sql.DB, cfg *setup.ServerStartupValues) *SQLStorage {
 	return &SQLStorage{
-		db: db,
+		cfg:        cfg,
+		db:         db,
+		statements: map[string]*sql.Stmt{},
+		mu:         sync.RWMutex{},
 	}
 }
 
-func (storage *SQLStorage) Get(metricType consts.Metric, name string) *consts.Values {
+func (storage *SQLStorage) prepareStmt(query string) (*sql.Stmt, error) {
+	storage.mu.RLock() // Блокируем только для чтения
+	stmt, exists := storage.statements[query]
+	storage.mu.RUnlock() // Разблокируем чтение
+	if exists {
+		return stmt, nil
+	}
+
+	storage.mu.Lock()         // Блокируем на запись
+	defer storage.mu.Unlock() // Разблокируем запись
+
+	stmt, err := storage.db.Prepare(query)
+	if err != nil {
+		return nil, err
+	}
+	storage.statements[query] = stmt
+	return stmt, nil
+}
+
+func (storage *SQLStorage) Get(ctx context.Context, metricType consts.Metric, name string) *consts.Values {
 	values, err := retry.WithRetry(func() (consts.Values, error) {
 
-		row := storage.db.QueryRow("SELECT value_int, value_float FROM metrics WHERE name = $1 AND type = $2", name, metricType)
+		query := "SELECT value_int, value_float FROM metrics WHERE name = $1 AND type = $2"
+
+		stmt, err := storage.prepareStmt(query)
+		if err != nil {
+			return consts.Values{}, err
+		}
+
+		row := stmt.QueryRowContext(ctx, name, metricType)
 
 		var values consts.Values
 
-		err := row.Scan(&values.Counter, &values.Gauge)
+		err = row.Scan(&values.Counter, &values.Gauge)
 		return values, err
-	})
+	}, storage.cfg.RetryIntervals)
 
 	if err != nil {
 		logger.Instance.Warnw("NewSQLStorage", "Get", err)
@@ -41,27 +75,29 @@ func (storage *SQLStorage) Get(metricType consts.Metric, name string) *consts.Va
 	return &values
 }
 
-func (storage *SQLStorage) SetGauge(name string, value *float64) {
+func (storage *SQLStorage) SetGauge(ctx context.Context, name string, value *float64) {
 	_, err := retry.WithRetry(func() (string, error) {
-		innerErr := storage.insertData(storage.db, name, consts.GAUGE, value, nil)
+		innerErr := storage.insertData(ctx, nil, name, consts.GAUGE, value, nil)
 		return "", innerErr
-	})
+	}, storage.cfg.RetryIntervals)
 	if err != nil {
 		logger.Instance.Warnw("NewSQLStorage", "SetGauge", err)
 	}
 }
 
-func (storage *SQLStorage) SetCounter(name string, value *int64) {
+func (storage *SQLStorage) SetCounter(ctx context.Context, name string, value *int64) {
 	_, err := retry.WithRetry(func() (string, error) {
-		innerErr := storage.insertData(storage.db, name, consts.COUNTER, nil, value)
+		innerErr := storage.insertData(ctx, nil, name, consts.COUNTER, nil, value)
 		return "", innerErr
-	})
+	}, storage.cfg.RetryIntervals)
 	if err != nil {
 		logger.Instance.Warnw("NewSQLStorage", "SetCounter", err)
 	}
 }
 
-func (storage *SQLStorage) insertData(sqlInstance db.SQLExecutor, name string, metricType consts.Metric, valueFloatPointer *float64, valueIntPointer *int64) error {
+func (storage *SQLStorage) insertData(ctx context.Context, tx *sql.Tx, name string, metricType consts.Metric, valueFloatPointer *float64, valueIntPointer *int64) error {
+
+	logger.Instance.Debugw("insertData", "tx", tx, "name", name, "metricType", metricType, "valueFloat", valueFloatPointer, "valueInt", valueIntPointer)
 
 	query := `
     INSERT INTO metrics (name, type, value_int, value_float)
@@ -77,23 +113,32 @@ func (storage *SQLStorage) insertData(sqlInstance db.SQLExecutor, name string, m
             ELSE metrics.value_float 
         END;
 `
-	//logger.Instance.Debug(debugQuery(query, name, metricType, valueIntPointer, valueFloatPointer))
+	logger.Instance.Debug(debugQuery(query, name, metricType, valueIntPointer, valueFloatPointer))
 
-	stmt, err := sqlInstance.Prepare(query)
+	if tx != nil {
+		// если запрос в рамках транзакции, то тогда запрос не подготавливаем
+		_, err := tx.ExecContext(ctx, query, name, metricType, valueIntPointer, valueFloatPointer)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	stmt, err := storage.prepareStmt(query)
 	if err != nil {
 		return err
 	}
 
-	_, err = stmt.Exec(name, metricType, valueIntPointer, valueFloatPointer)
+	_, err = stmt.ExecContext(ctx, name, metricType, valueIntPointer, valueFloatPointer)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (storage *SQLStorage) SetData(data StorageData) error {
+func (storage *SQLStorage) SetData(ctx context.Context, data StorageData) error {
 
-	err := retry.ExecuteTransactionWithRetry(storage.db, func(tx *sql.Tx) error {
+	err := retry.ExecuteTransactionWithRetry(ctx, storage.db, func(tx *sql.Tx) error {
 		for _, val := range data {
 			var metricType consts.Metric
 			if val.Counter != nil {
@@ -102,13 +147,13 @@ func (storage *SQLStorage) SetData(data StorageData) error {
 				metricType = consts.GAUGE
 			}
 
-			err := storage.insertData(tx, val.Name, metricType, val.Gauge, val.Counter)
+			err := storage.insertData(ctx, tx, val.Name, metricType, val.Gauge, val.Counter)
 			if err != nil {
 				return err
 			}
 		}
 		return nil
-	})
+	}, storage.cfg.RetryIntervals)
 
 	if err != nil {
 		return err
@@ -117,13 +162,21 @@ func (storage *SQLStorage) SetData(data StorageData) error {
 	return nil
 }
 
-func (storage *SQLStorage) GetAll() (*StorageData, error) {
+func (storage *SQLStorage) GetAll(ctx context.Context) (*StorageData, error) {
 
 	metrics := StorageData{}
 
 	rows, err := retry.WithRetry(func() (*sql.Rows, error) {
-		return storage.db.Query("SELECT name, value_int, value_float from metrics")
-	})
+
+		query := "SELECT name, value_int, value_float from metrics"
+
+		stmt, err := storage.prepareStmt(query)
+		if err != nil {
+			return nil, err
+		}
+
+		return stmt.QueryContext(ctx)
+	}, storage.cfg.RetryIntervals)
 	if err != nil {
 		return nil, err
 	}
@@ -147,8 +200,8 @@ func (storage *SQLStorage) GetAll() (*StorageData, error) {
 	return &metrics, nil
 }
 
-func (storage *SQLStorage) IsAvailable() bool {
-	err := storage.db.Ping()
+func (storage *SQLStorage) IsAvailable(ctx context.Context) bool {
+	err := storage.db.PingContext(ctx)
 	if err != nil {
 		logger.Instance.Warnw("IsAvailable", "err", err)
 		return false

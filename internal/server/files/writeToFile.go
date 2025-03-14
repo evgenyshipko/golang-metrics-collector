@@ -4,6 +4,7 @@ import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/retry"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
+	"time"
 )
 
 func WriteToFile(fileName string, data *storage.StorageData) error {
@@ -24,10 +25,10 @@ func WriteToFile(fileName string, data *storage.StorageData) error {
 	return err
 }
 
-func WriteToFileWithRetry(fileName string, data *storage.StorageData) error {
+func WriteToFileWithRetry(fileName string, data *storage.StorageData, retryIntervals []time.Duration) error {
 	_, err := retry.WithRetry(func() (string, error) {
 		err := WriteToFile(fileName, data)
 		return "", err
-	})
+	}, retryIntervals)
 	return err
 }

@@ -3,15 +3,18 @@ package tasks
 import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/converter"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/requests"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/setup"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/storage"
 	c "github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"time"
 )
 
-func SendMetricsTask(interval time.Duration, metrics *storage.MetricStorage, host string) {
-	ticker := time.NewTicker(interval)
+func SendMetricsTask(cfg setup.AgentStartupValues, metrics *storage.MetricStorage) {
+	ticker := time.NewTicker(cfg.ReportInterval)
 	defer ticker.Stop()
+
+	requester := requests.NewRequester(cfg)
 
 	for range ticker.C {
 
@@ -26,7 +29,7 @@ func SendMetricsTask(interval time.Duration, metrics *storage.MetricStorage, hos
 			metricDataArr = append(metricDataArr, metricData)
 		}
 
-		err := requests.SendMetricBatch(host, metricDataArr)
+		err := requester.SendMetricBatch(cfg.Host, metricDataArr)
 		if err != nil {
 			logger.Instance.Warnw("SendMetricsTask", "SendMetricBatch", err)
 			return

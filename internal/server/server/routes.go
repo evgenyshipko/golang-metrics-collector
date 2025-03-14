@@ -23,5 +23,5 @@ func (s *CustomServer) routes() {
 		r.With(update.SaveURLParamsToContext, update.ValidateName, update.ValidateType, update.ValidateValue).Post("/{metricType}/{metricName}/{metricValue}", s.StoreMetricHandler)
 	})
 
-	s.router.With(middlewares.SaveBodyArrayToContext, middlewares.ValidateNameArr, middlewares.ValidateTypeArr, middlewares.ValidateValueArr).Post("/updates/", s.BatchStoreMetricHandler)
+	s.router.With(middlewares.SaveMetricsToContext, middlewares.ValidateNameArr, middlewares.ValidateTypeArr, middlewares.ValidateValueArr).Post("/updates/", s.BatchStoreMetricHandler)
 }

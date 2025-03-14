@@ -13,13 +13,25 @@ Agent collects metrics and send it to server. Server store metric values in memo
 docker run -d --name metrics-collector-pg -p 5433:5432 -e POSTGRES_PASSWORD=metrics -e POSTGRES_USER=metrics -e POSTGRES_DB=metrics postgres
 ```
 
-1. Run metrics collector (server)
+1. Install [goose](https://github.com/pressly/goose?tab=readme-ov-file#up)
 
+(For MacOs):
 ```bash
-go run ./cmd/server
+brew install goose
 ```
 
-2. Run agent (source of metric values)
+2. Run migrations
+```bash
+goose -dir internal/server/db/migrations postgres "postgres://metrics:metrics@localhost:5433/metrics?sslmode=disable" up 
+```
+
+3. Run metrics collector (server)
+
+```bash
+go run ./cmd/server -d="postgres://metrics:metrics@localhost:5433/metrics?sslmode=disable" -m=false
+```
+
+4. Run agent (source of metric values)
 
 ```bash
 go run ./cmd/agent

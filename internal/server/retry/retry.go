@@ -14,10 +14,8 @@ import (
 	"time"
 )
 
-func WithRetry[T any](fn func() (T, error)) (T, error) {
+func WithRetry[T any](fn func() (T, error), retryIntervals []time.Duration) (T, error) {
 	var result T
-	retryIntervals := []time.Duration{1 * time.Second, 3 * time.Second, 5 * time.Second}
-
 	var err error
 	for i, wait := range retryIntervals {
 		result, err = fn()
@@ -33,15 +31,8 @@ func WithRetry[T any](fn func() (T, error)) (T, error) {
 	return result, err
 }
 
-func ExecuteTransactionWithRetry(db *sql.DB, fn func(tx *sql.Tx) error) error {
-	retryIntervals := []time.Duration{1 * time.Second, 3 * time.Second, 5 * time.Second}
-
+func ExecuteTransactionWithRetry(ctx context.Context, db *sql.DB, fn func(tx *sql.Tx) error, retryIntervals []time.Duration) error {
 	for attempt, interval := range retryIntervals {
-
-		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second) // ⏳ Тайм-аут 3 секунды
-
-		defer cancel()
-
 		tx, err := db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 		if err != nil {
 			logger.Instance.Warnw("ExecuteTransactionWithRetry", "ошибка создания транзакции", err)
@@ -56,7 +47,11 @@ func ExecuteTransactionWithRetry(db *sql.DB, fn func(tx *sql.Tx) error) error {
 		err = fn(tx)
 		if err != nil {
 			logger.Instance.Warnw("ExecuteTransactionWithRetry", "ошибка функции", err)
-			tx.Rollback()
+			err1 := tx.Rollback()
+			if err1 != nil {
+				logger.Instance.Warnw("ExecuteTransactionWithRetry ошибка роллбэка транзакции", "err1", err1)
+				return err1
+			}
 			if isRetriableError(err) {
 				logger.Instance.Warnf("ExecuteTransactionWithRetry Попытка %d не удалась, ждем %s перед повтором...", attempt+1, interval)
 				time.Sleep(interval)
