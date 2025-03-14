@@ -1,11 +1,9 @@
 package logging
 
 import (
-	"bytes"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares/utils"
 	"github.com/go-chi/chi/middleware"
-	"io"
 	"net/http"
 	"time"
 )
@@ -16,17 +14,6 @@ func LoggingHandlers(h http.Handler) http.Handler {
 
 		// Получаем requestID из контекста (middleware chi)
 		requestID := middleware.GetReqID(r.Context())
-
-		// Читаем тело запроса
-		var requestBody string
-		if r.Body != nil {
-			bodyBytes, err := io.ReadAll(r.Body)
-			if err == nil {
-				requestBody = string(bodyBytes)
-				// Восстанавливаем r.Body, чтобы обработчики могли его использовать
-				r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-			}
-		}
 
 		requestBody, err := utils.GetBodyAndRestore(r)
 		if err != nil {
