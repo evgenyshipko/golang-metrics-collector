@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/setup"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/storage"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/tasks"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/types"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
@@ -13,8 +12,6 @@ import (
 )
 
 func main() {
-	defer logger.Sync()
-
 	vars, err := setup.GetStartupValues(os.Args[1:])
 	if err != nil {
 		logger.Instance.Fatalw("Аргументы не прошли валидацию", err)
@@ -23,19 +20,19 @@ func main() {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 
-	metricStorage := storage.NewMetricStorage()
+	dataCh := make(chan types.ChanData, 100)
 
-	go tasks.SendMetricsTask(vars, metricStorage)
+	errCh := make(chan error)
 
-	dataCh := make(chan types.ChanData)
-
-	defer close(dataCh)
+	go tasks.SendMetricsTask(vars, dataCh, errCh)
 
 	go tasks.MetricsGenerator(vars.PollInterval, dataCh)
 
 	go tasks.AdditionalMetricsGenerator(vars.PollInterval, dataCh)
 
-	go tasks.MetricsConsumer(metricStorage, dataCh)
+	go tasks.ErrorsConsumer(errCh)
+
+	go tasks.LogChanLength(dataCh)
 
 	// Ожидаем сигнала завершения
 	<-signalChan
@@ -43,4 +40,11 @@ func main() {
 	// Даём время горутине завершиться
 	time.Sleep(1 * time.Second)
 	logger.Instance.Info("Агент завершил работу")
+
+	defer func() {
+		close(dataCh)
+		close(errCh)
+		close(signalChan)
+		logger.Sync()
+	}()
 }

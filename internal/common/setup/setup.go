@@ -78,6 +78,18 @@ func GetIntervals(envName string, flagVal *string) ([]time.Duration, error) {
 	return convertStringToDurations(*flagVal)
 }
 
+func GetIntVariable(envName string, flagVal *int) (int, error) {
+	env, exists := os.LookupEnv(envName)
+	if exists {
+		int64_, err := strconv.ParseInt(env, 10, 32)
+		if err != nil {
+			return 0, err
+		}
+		return int(int64_), nil
+	}
+	return *flagVal, nil
+}
+
 func convertStringToDurations(input string) ([]time.Duration, error) {
 	intervals := strings.Split(input, ",")
 

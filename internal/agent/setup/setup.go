@@ -15,6 +15,7 @@ type AgentStartupValues struct {
 	RetryIntervals     []time.Duration `env:"RETRY_INTERVALS"`
 	RequestWaitTimeout time.Duration   `env:"REQUEST_WAIT_TIMEOUT"`
 	HashKey            string          `env:"KEY"`
+	RateLimit          int             `env:"RATE_LIMIT"`
 }
 
 const (
@@ -37,6 +38,8 @@ func GetStartupValues(args []string) (AgentStartupValues, error) {
 	flagRequestWaitTimeout := flagSet.Int("w", defaultRequestWaitTimeout, "http-request wait timeout")
 
 	flagHashKey := flagSet.String("k", "", "secret used to hash metrics")
+
+	flagRateLimit := flagSet.Int("l", 3, "count of http-sender workers")
 
 	// Парсим переданные аргументы
 	if err := flagSet.Parse(args); err != nil {
@@ -75,6 +78,13 @@ func GetStartupValues(args []string) (AgentStartupValues, error) {
 	}
 
 	cfg.RequestWaitTimeout = requestWaitTimeout
+
+	rateLimit, err := setup.GetIntVariable("RATE_LIMIT", flagRateLimit)
+	if err != nil {
+		return AgentStartupValues{}, err
+	}
+
+	cfg.RateLimit = rateLimit
 
 	logger.Instance.Infow("GetStartupValues", "Параметры запуска:", cfg)
 

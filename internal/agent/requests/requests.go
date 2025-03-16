@@ -33,6 +33,7 @@ var retryAfterFunc = func(retryIntervals []time.Duration) func(c *resty.Client, 
 type Requester struct {
 	client  *resty.Client
 	hashKey string
+	host    string
 }
 
 func NewRequester(cfg setup.AgentStartupValues) *Requester {
@@ -49,6 +50,7 @@ func NewRequester(cfg setup.AgentStartupValues) *Requester {
 	return &Requester{
 		client:  restyClient,
 		hashKey: cfg.HashKey,
+		host:    cfg.Host,
 	}
 }
 
@@ -104,7 +106,7 @@ func (r *Requester) sendWithCompression(url string, data interface{}, headers ma
 	return r.sendPostRequest(url, compressedBody, headers)
 }
 
-func (r *Requester) SendMetricBatch(domain string, data []consts.MetricData) error {
+func (r *Requester) SendMetricBatch(data []consts.MetricData) error {
 	requestID := uuid.New().String()
 
 	headers := map[string]string{
@@ -112,7 +114,7 @@ func (r *Requester) SendMetricBatch(domain string, data []consts.MetricData) err
 		"x-request-id": requestID,
 	}
 
-	url := fmt.Sprintf("http://%s/updates/", domain)
+	url := fmt.Sprintf("http://%s/updates/", r.host)
 
 	resp, err := r.sendWithCompression(url, data, headers, r.hashKey)
 
@@ -130,7 +132,7 @@ func (r *Requester) SendMetricBatch(domain string, data []consts.MetricData) err
 	return nil
 }
 
-func (r *Requester) SendMetric(domain string, metricType consts.Metric, name string, value interface{}) error {
+func (r *Requester) SendMetric(metricType consts.Metric, name string, value interface{}) error {
 	requestData, err := converter.GenerateMetricData(metricType, name, value)
 	if err != nil {
 		logger.Instance.Warnw("SendMetric", "GenerateMetricData", err)
@@ -144,7 +146,7 @@ func (r *Requester) SendMetric(domain string, metricType consts.Metric, name str
 		"x-request-id": requestID,
 	}
 
-	url := fmt.Sprintf("http://%s/update/", domain)
+	url := fmt.Sprintf("http://%s/update/", r.host)
 
 	resp, err := r.sendWithCompression(url, requestData, headers, r.hashKey)
 
