@@ -4,6 +4,7 @@ import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/setup"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/storage"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/tasks"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/types"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"os"
 	"os/signal"
@@ -22,11 +23,19 @@ func main() {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 
-	metrics := storage.NewMetricStorage()
+	metricStorage := storage.NewMetricStorage()
 
-	go tasks.CollectMetricsTask(vars.PollInterval, &metrics)
+	go tasks.SendMetricsTask(vars, metricStorage)
 
-	go tasks.SendMetricsTask(vars, &metrics)
+	dataCh := make(chan types.ChanData)
+
+	defer close(dataCh)
+
+	go tasks.MetricsGenerator(vars.PollInterval, dataCh)
+
+	go tasks.AdditionalMetricsGenerator(vars.PollInterval, dataCh)
+
+	go tasks.MetricsConsumer(metricStorage, dataCh)
 
 	// Ожидаем сигнала завершения
 	<-signalChan

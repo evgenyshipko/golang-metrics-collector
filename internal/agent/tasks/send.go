@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func SendMetricsTask(cfg setup.AgentStartupValues, metrics *storage.MetricStorage) {
+func SendMetricsTask(cfg setup.AgentStartupValues, storage *storage.MetricStorage) {
 	ticker := time.NewTicker(cfg.ReportInterval)
 	defer ticker.Stop()
 
@@ -20,7 +20,7 @@ func SendMetricsTask(cfg setup.AgentStartupValues, metrics *storage.MetricStorag
 
 		var metricDataArr []c.MetricData
 
-		for name, data := range *metrics {
+		for name, data := range storage.Data {
 			metricData, err := converter.GenerateMetricData(data.Type, name, data.Value)
 			if err != nil {
 				logger.Instance.Warnw("SendMetricsTask", "GenerateMetricData", err)

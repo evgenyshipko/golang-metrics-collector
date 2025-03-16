@@ -7,17 +7,17 @@ import (
 	"runtime"
 )
 
-func Create(metrics *storage.MetricStorage) func() {
+func Create() func() *storage.MetricStorageData {
 	pollCount := 0
 
 	var stats runtime.MemStats
 
-	return func() {
+	return func() *storage.MetricStorageData {
 		runtime.ReadMemStats(&stats)
 
 		pollCount++
 
-		*metrics = storage.MetricStorage{
+		metrics := storage.MetricStorageData{
 			"Alloc":         {Value: stats.Alloc, Type: consts.GAUGE},
 			"BuckHashSys":   {Value: stats.BuckHashSys, Type: consts.GAUGE},
 			"Frees":         {Value: stats.Frees, Type: consts.GAUGE},
@@ -48,6 +48,6 @@ func Create(metrics *storage.MetricStorage) func() {
 			"PollCount":     {Value: pollCount, Type: consts.COUNTER},
 			"RandomValue":   {Value: rand.Float64(), Type: consts.GAUGE},
 		}
-		//logger.Instance.Info("CollectMetricsTask", "Данные", metrics)
+		return &metrics
 	}
 }
