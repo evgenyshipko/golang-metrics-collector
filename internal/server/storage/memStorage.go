@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 )
 
@@ -14,7 +15,7 @@ func NewMemStorage() *MemStorage {
 	}
 }
 
-func (storage *MemStorage) Get(metricType consts.Metric, name string) *consts.Values {
+func (storage *MemStorage) Get(_ context.Context, metricType consts.Metric, name string) *consts.Values {
 	if metricType == consts.COUNTER {
 		dataPointer := storage.getCounterData(name)
 		if dataPointer != nil && dataPointer.Counter != nil {
@@ -54,7 +55,7 @@ func (storage *MemStorage) getGaugeData(name string) *Data {
 	return nil
 }
 
-func (storage *MemStorage) SetGauge(name string, value *float64) {
+func (storage *MemStorage) SetGauge(_ context.Context, name string, value *float64) {
 	dataPointer := storage.getGaugeData(name)
 	if dataPointer != nil {
 		dataPointer.Gauge = value
@@ -63,7 +64,7 @@ func (storage *MemStorage) SetGauge(name string, value *float64) {
 	storage.data = append(storage.data, Data{Name: name, Values: consts.Values{Gauge: value}})
 }
 
-func (storage *MemStorage) SetCounter(name string, value *int64) {
+func (storage *MemStorage) SetCounter(_ context.Context, name string, value *int64) {
 	dataPointer := storage.getCounterData(name)
 	if dataPointer != nil {
 		existingValue := *dataPointer.Counter
@@ -74,23 +75,23 @@ func (storage *MemStorage) SetCounter(name string, value *int64) {
 	storage.data = append(storage.data, Data{Name: name, Values: consts.Values{Counter: value}})
 }
 
-func (storage *MemStorage) GetAll() (*StorageData, error) {
+func (storage *MemStorage) GetAll(_ context.Context) (*StorageData, error) {
 	return &storage.data, nil
 }
 
-func (storage *MemStorage) SetData(storageData StorageData) error {
+func (storage *MemStorage) SetData(ctx context.Context, storageData StorageData) error {
 	for _, data := range storageData {
 		if data.Counter != nil {
-			storage.SetCounter(data.Name, data.Counter)
+			storage.SetCounter(ctx, data.Name, data.Counter)
 		}
 		if data.Gauge != nil {
-			storage.SetGauge(data.Name, data.Gauge)
+			storage.SetGauge(ctx, data.Name, data.Gauge)
 		}
 	}
 	return nil
 }
 
-func (storage *MemStorage) IsAvailable() bool {
+func (storage *MemStorage) IsAvailable(_ context.Context) bool {
 	return true
 }
 

@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/setup"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/storage"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/tasks"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/types"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"os"
 	"os/signal"
@@ -12,21 +12,33 @@ import (
 )
 
 func main() {
-	defer logger.Sync()
+	signalChan := make(chan os.Signal, 1)
+	dataCh := make(chan types.MetricMessage, 100)
+	errCh := make(chan error)
 
-	vars, err := setup.GetStartupValues()
+	defer func() {
+		close(dataCh)
+		close(errCh)
+		close(signalChan)
+		logger.Sync()
+	}()
+
+	vars, err := setup.GetStartupValues(os.Args[1:])
 	if err != nil {
 		logger.Instance.Fatalw("Аргументы не прошли валидацию", err)
 	}
 
-	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 
-	metrics := storage.NewMetricStorage()
+	go tasks.SendMetricsTask(vars, dataCh, errCh)
 
-	go tasks.CollectMetricsTask(vars.PollInterval, &metrics)
+	go tasks.MetricsGenerator(vars.PollInterval, dataCh)
 
-	go tasks.SendMetricsTask(vars.ReportInterval, &metrics, vars.Host)
+	go tasks.AdditionalMetricsGenerator(vars.PollInterval, dataCh)
+
+	go tasks.ErrorsConsumer(errCh)
+
+	go tasks.LogChanLength(dataCh)
 
 	// Ожидаем сигнала завершения
 	<-signalChan

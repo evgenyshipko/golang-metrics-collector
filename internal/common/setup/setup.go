@@ -6,6 +6,7 @@ import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -67,4 +68,43 @@ func GetBoolVariable(envName string, flagVal *bool) bool {
 		return boolean
 	}
 	return *flagVal
+}
+
+func GetIntervals(envName string, flagVal *string) ([]time.Duration, error) {
+	env, exists := os.LookupEnv(envName)
+	if exists {
+		return convertStringToDurations(env)
+	}
+	return convertStringToDurations(*flagVal)
+}
+
+func GetIntVariable(envName string, flagVal *int) (int, error) {
+	env, exists := os.LookupEnv(envName)
+	if exists {
+		int64_, err := strconv.ParseInt(env, 10, 32)
+		if err != nil {
+			return 0, err
+		}
+		return int(int64_), nil
+	}
+	return *flagVal, nil
+}
+
+func convertStringToDurations(input string) ([]time.Duration, error) {
+	intervals := strings.Split(input, ",")
+
+	var durations []time.Duration
+
+	for _, interval := range intervals {
+		interval = strings.TrimSpace(interval)
+
+		duration, err := time.ParseDuration(interval)
+		if err != nil {
+			return nil, fmt.Errorf("ошибка преобразования '%s' в time.Duration: %v", interval, err)
+		}
+
+		durations = append(durations, duration)
+	}
+
+	return durations, nil
 }

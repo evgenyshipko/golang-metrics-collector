@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -61,12 +62,12 @@ func TestMemStorage_Set_MetricTypesCheck(t *testing.T) {
 			}
 
 			if tt.args.metricType == consts.GAUGE {
-				storage.SetGauge(tt.args.name, tt.args.Gauge)
+				storage.SetGauge(context.Background(), tt.args.name, tt.args.Gauge)
 			} else if tt.args.metricType == consts.COUNTER {
-				storage.SetCounter(tt.args.name, tt.args.Counter)
+				storage.SetCounter(context.Background(), tt.args.name, tt.args.Counter)
 			}
 
-			value := storage.Get(tt.args.metricType, tt.args.name)
+			value := storage.Get(context.Background(), tt.args.metricType, tt.args.name)
 
 			if tt.args.metricType == consts.GAUGE {
 				if tt.args.Gauge != nil {
@@ -98,10 +99,11 @@ func TestMemStorage_Set_SaveGaugeMetricTwice(t *testing.T) {
 		gauge1 := 111.1
 		gauge2 := 105.1
 		expectedGauge := 105.1
+		ctx := context.Background()
 
-		storage.SetGauge(name, &gauge1)
-		storage.SetGauge(name, &gauge2)
-		result := storage.Get(consts.GAUGE, name)
+		storage.SetGauge(ctx, name, &gauge1)
+		storage.SetGauge(ctx, name, &gauge2)
+		result := storage.Get(ctx, consts.GAUGE, name)
 
 		assert.Equal(t, expectedGauge, *result.Gauge)
 	})
@@ -117,10 +119,11 @@ func TestMemStorage_Set_SaveCounterMetricTwice(t *testing.T) {
 		var counter1 int64 = 100
 		var counter2 int64 = 200
 		var expectedCounter int64 = 300
+		ctx := context.Background()
 
-		storage.SetCounter(name, &counter1)
-		storage.SetCounter(name, &counter2)
-		result := storage.Get(consts.COUNTER, name)
+		storage.SetCounter(ctx, name, &counter1)
+		storage.SetCounter(ctx, name, &counter2)
+		result := storage.Get(ctx, consts.COUNTER, name)
 
 		assert.Equal(t, expectedCounter, *result.Counter)
 	})

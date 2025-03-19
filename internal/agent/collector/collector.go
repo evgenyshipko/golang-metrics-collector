@@ -1,23 +1,23 @@
 package collector
 
 import (
-	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/storage"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/types"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"math/rand"
 	"runtime"
 )
 
-func Create(metrics *storage.MetricStorage) func() {
+func Create() func() *types.MetricDataMap {
 	pollCount := 0
 
 	var stats runtime.MemStats
 
-	return func() {
+	return func() *types.MetricDataMap {
 		runtime.ReadMemStats(&stats)
 
 		pollCount++
 
-		*metrics = storage.MetricStorage{
+		metrics := types.MetricDataMap{
 			"Alloc":         {Value: stats.Alloc, Type: consts.GAUGE},
 			"BuckHashSys":   {Value: stats.BuckHashSys, Type: consts.GAUGE},
 			"Frees":         {Value: stats.Frees, Type: consts.GAUGE},
@@ -48,6 +48,6 @@ func Create(metrics *storage.MetricStorage) func() {
 			"PollCount":     {Value: pollCount, Type: consts.COUNTER},
 			"RandomValue":   {Value: rand.Float64(), Type: consts.GAUGE},
 		}
-		//logger.Instance.Info("CollectMetricsTask", "Данные", metrics)
+		return &metrics
 	}
 }
