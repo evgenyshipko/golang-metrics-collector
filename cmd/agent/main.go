@@ -12,17 +12,23 @@ import (
 )
 
 func main() {
+	signalChan := make(chan os.Signal, 1)
+	dataCh := make(chan types.MetricMessage, 100)
+	errCh := make(chan error)
+
+	defer func() {
+		close(dataCh)
+		close(errCh)
+		close(signalChan)
+		logger.Sync()
+	}()
+
 	vars, err := setup.GetStartupValues(os.Args[1:])
 	if err != nil {
 		logger.Instance.Fatalw("Аргументы не прошли валидацию", err)
 	}
 
-	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
-
-	dataCh := make(chan types.ChanData, 100)
-
-	errCh := make(chan error)
 
 	go tasks.SendMetricsTask(vars, dataCh, errCh)
 
@@ -40,11 +46,4 @@ func main() {
 	// Даём время горутине завершиться
 	time.Sleep(1 * time.Second)
 	logger.Instance.Info("Агент завершил работу")
-
-	defer func() {
-		close(dataCh)
-		close(errCh)
-		close(signalChan)
-		logger.Sync()
-	}()
 }

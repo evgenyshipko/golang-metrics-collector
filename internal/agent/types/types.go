@@ -4,14 +4,14 @@ import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 )
 
-type Data struct {
+type MetricValue struct {
 	Type  consts.Metric
 	Value interface{}
 	Name  string
 }
 
-type ChanData struct {
-	Data Data
+type MetricMessage struct {
+	Data MetricValue
 	Err  error
 }
 

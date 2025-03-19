@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func MetricsGenerator(interval time.Duration, inputCh chan<- types.ChanData) {
+func MetricsGenerator(interval time.Duration, inputCh chan<- types.MetricMessage) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
@@ -16,8 +16,8 @@ func MetricsGenerator(interval time.Duration, inputCh chan<- types.ChanData) {
 		metrics := *collectMetricsMemoized()
 
 		for name, value := range metrics {
-			inputCh <- types.ChanData{
-				Data: types.Data{
+			inputCh <- types.MetricMessage{
+				Data: types.MetricValue{
 					Type:  value.Type,
 					Name:  name,
 					Value: value.Value,

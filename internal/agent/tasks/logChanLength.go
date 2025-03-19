@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func LogChanLength(ch chan types.ChanData) {
+func LogChanLength(ch chan types.MetricMessage) {
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 
