@@ -1,11 +1,12 @@
 package logging
 
 import (
+	"net/http"
+	"time"
+
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares/utils"
 	"github.com/go-chi/chi/middleware"
-	"net/http"
-	"time"
 )
 
 func LoggingHandlers(h http.Handler) http.Handler {

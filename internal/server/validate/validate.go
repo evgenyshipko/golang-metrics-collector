@@ -2,6 +2,7 @@ package validate
 
 import (
 	"errors"
+
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 )
 

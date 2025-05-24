@@ -2,9 +2,10 @@ package httpserver
 
 import (
 	"context"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"net/http"
 	"time"
+
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 )
 
 type HTTPServer struct {

@@ -2,10 +2,11 @@ package middlewares
 
 import (
 	"compress/gzip"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 )
 
 type gzipWriter struct {

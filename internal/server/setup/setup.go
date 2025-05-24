@@ -2,11 +2,12 @@ package setup
 
 import (
 	"flag"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/common/setup"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/setup"
 )
 
 type ServerStartupValues struct {

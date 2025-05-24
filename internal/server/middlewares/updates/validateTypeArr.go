@@ -1,8 +1,9 @@
 package middlewares
 
 import (
-	"github.com/evgenyshipko/golang-metrics-collector/internal/server/validate"
 	"net/http"
+
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/validate"
 )
 
 func ValidateTypeArr(next http.Handler) http.Handler {

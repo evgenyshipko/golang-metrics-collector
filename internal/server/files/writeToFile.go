@@ -1,10 +1,11 @@
 package files
 
 import (
+	"time"
+
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/retry"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
-	"time"
 )
 
 func WriteToFile(fileName string, data *storage.StorageData) error {

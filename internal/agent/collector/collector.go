@@ -1,10 +1,11 @@
 package collector
 
 import (
-	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/types"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"math/rand"
 	"runtime"
+
+	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/types"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 )
 
 func Create() func() *types.MetricDataMap {

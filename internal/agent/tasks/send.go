@@ -2,12 +2,13 @@ package tasks
 
 import (
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/requests"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/setup"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/types"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
-	"sync"
-	"time"
 )
 
 func SendMetricsTask(cfg setup.AgentStartupValues, dataChan <-chan types.MetricMessage, errChan chan<- error) {

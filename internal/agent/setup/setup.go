@@ -3,9 +3,10 @@ package setup
 import (
 	"flag"
 	"fmt"
+	"time"
+
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/setup"
-	"time"
 )
 
 type AgentStartupValues struct {

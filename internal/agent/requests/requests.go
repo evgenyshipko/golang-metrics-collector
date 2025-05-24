@@ -6,6 +6,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/converter"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/gzip"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/setup"
@@ -13,7 +15,6 @@ import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/go-resty/resty/v2"
 	"github.com/google/uuid"
-	"time"
 )
 
 var retryAfterFunc = func(retryIntervals []time.Duration) func(c *resty.Client, r *resty.Response) (time.Duration, error) {

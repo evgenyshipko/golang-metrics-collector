@@ -2,6 +2,10 @@ package server
 
 import (
 	"context"
+	"net/http"
+	"net/http/pprof"
+	_ "net/http/pprof"
+
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/files"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/httpserver"
@@ -12,9 +16,6 @@ import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-	"net/http"
-	"net/http/pprof"
-	_ "net/http/pprof"
 )
 
 type CustomServer struct {

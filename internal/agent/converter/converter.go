@@ -2,9 +2,10 @@ package converter
 
 import (
 	"fmt"
+	"reflect"
+
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
-	"reflect"
 )
 
 func ToInt64(value interface{}) (int64, error) {

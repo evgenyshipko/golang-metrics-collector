@@ -4,14 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/server/retry"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/server/setup"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/retry"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/setup"
 )
 
 type SQLStorage struct {

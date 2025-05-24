@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"strconv"
+
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	m "github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares/update"
 	middlewares "github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares/updates"
-	"net/http"
-	"strconv"
 )
 
 func (s *CustomServer) StoreMetricHandler(res http.ResponseWriter, req *http.Request) {

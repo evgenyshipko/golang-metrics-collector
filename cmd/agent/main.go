@@ -1,14 +1,15 @@
 package main
 
 import (
-	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/setup"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/tasks"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/types"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/setup"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/tasks"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/types"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 )
 
 func main() {

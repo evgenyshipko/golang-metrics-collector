@@ -1,10 +1,11 @@
 package tasks
 
 import (
+	"time"
+
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/files"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/server"
-	"time"
 )
 
 func WriteMetricsToFileTask(interval time.Duration, filePath string, server *server.CustomServer) {

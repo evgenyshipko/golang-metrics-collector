@@ -1,14 +1,15 @@
 package server
 
 import (
-	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/server/setup"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/setup"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBadRequestHandler(t *testing.T) {

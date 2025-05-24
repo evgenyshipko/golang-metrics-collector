@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+
 	c "github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/files"
 )

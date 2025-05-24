@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"embed"
+
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/pressly/goose/v3"

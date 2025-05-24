@@ -2,11 +2,6 @@ package server
 
 import (
 	"fmt"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/server/setup"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"io"
 	"log"
 	"net/http"
@@ -14,6 +9,12 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/setup"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRoutes(t *testing.T) {

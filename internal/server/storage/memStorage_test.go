@@ -2,9 +2,10 @@ package storage
 
 import (
 	"context"
+	"testing"
+
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestMemStorage_Set_MetricTypesCheck(t *testing.T) {
