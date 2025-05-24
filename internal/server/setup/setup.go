@@ -1,3 +1,4 @@
+// Пакет с настройками запуска приложения.
 package setup
 
 import (
@@ -11,15 +12,15 @@ import (
 )
 
 type ServerStartupValues struct {
-	Host               string          `env:"ADDRESS"`
-	StoreInterval      time.Duration   `env:"STORE_INTERVAL"`
-	FileStoragePath    string          `env:"FILE_STORAGE_PATH"`
-	Restore            bool            `env:"RESTORE"`
-	DatabaseDSN        string          `env:"DATABASE_DSN"`
-	RetryIntervals     []time.Duration `env:"RETRY_INTERVALS"`
-	RequestWaitTimeout time.Duration   `env:"REQUEST_WAIT_TIMEOUT"`
-	AutoMigrations     bool            `env:"AUTO_MIGRATIONS"`
-	HashKey            string          `env:"KEY"`
+	Host               string          `env:"ADDRESS"`              // Хост сервера.
+	StoreInterval      time.Duration   `env:"STORE_INTERVAL"`       // Интервал между сохранениями метрик в локальный файл.
+	FileStoragePath    string          `env:"FILE_STORAGE_PATH"`    // Путь к файлу, в котором сохраняются метрики.
+	Restore            bool            `env:"RESTORE"`              // Восстанавливать метрики из файла при запуске или нет.
+	DatabaseDSN        string          `env:"DATABASE_DSN"`         // Строка с данными доступа к базе PostgreSQL
+	RetryIntervals     []time.Duration `env:"RETRY_INTERVALS"`      // Интервалы между попытками записи в базу.
+	RequestWaitTimeout time.Duration   `env:"REQUEST_WAIT_TIMEOUT"` // Таймаут ожидания ответа хендлеров.
+	AutoMigrations     bool            `env:"AUTO_MIGRATIONS"`      // Запускать миграции при запуске приложения или нет.
+	HashKey            string          `env:"KEY"`                  // Секретный хеш (авторизация).
 }
 
 func GetProjectRoot() string {
@@ -35,6 +36,7 @@ const (
 	defaultRequestWaitTimeout   = 10
 )
 
+// GetStartupValues берет переменные из флагов либо из переменных окружения. Если нет ни того, ни другого - то берет дефолтные значения.
 func GetStartupValues(args []string) (ServerStartupValues, error) {
 
 	rootDir := GetProjectRoot()
