@@ -43,3 +43,23 @@ To run unit test execute command:
 ```bash
 go test ./... -v
 ```
+
+### Run multichecker
+
+1. Build checker
+```bash
+go build -o staticlint cmd/staticlint/main.go
+```
+
+2. Run check
+```bash
+./staticlint ./...
+```
+
+### Open docs
+1. Run godoc
+```bash
+godoc -http=:8080
+```
+2. Open link in browser http://localhost:8080/pkg/?m=all
+
