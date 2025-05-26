@@ -43,3 +43,15 @@ To run unit test execute command:
 ```bash
 go test ./... -v
 ```
+
+### Run multichecker
+
+1. Build checker
+```bash
+go build -o checker cmd/checker/main.go
+```
+
+2. Run check
+```bash
+./checker ./...
+```
