@@ -3,8 +3,9 @@ package files
 import (
 	"bufio"
 	"encoding/json"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
 	"os"
+
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
 )
 
 type Producer struct {

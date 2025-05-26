@@ -5,13 +5,14 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
-	"github.com/jackc/pgconn"
-	"github.com/jackc/pgerrcode"
 	"net"
 	"os"
 	"syscall"
 	"time"
+
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
+	"github.com/jackc/pgconn"
+	"github.com/jackc/pgerrcode"
 )
 
 func WithRetry[T any](fn func() (T, error), retryIntervals []time.Duration) (T, error) {

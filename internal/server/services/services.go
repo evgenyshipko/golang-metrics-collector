@@ -2,9 +2,10 @@ package services
 
 import (
 	"context"
+	"time"
+
 	c "github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
-	"time"
 )
 
 type Service interface {

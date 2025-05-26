@@ -1,9 +1,10 @@
 package tasks
 
 import (
+	"time"
+
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/collector"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/types"
-	"time"
 )
 
 func MetricsGenerator(interval time.Duration, inputCh chan<- types.MetricMessage) {

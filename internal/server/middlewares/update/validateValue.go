@@ -1,9 +1,10 @@
 package update
 
 import (
+	"net/http"
+
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/validate"
-	"net/http"
 )
 
 func ValidateValue(next http.Handler) http.Handler {

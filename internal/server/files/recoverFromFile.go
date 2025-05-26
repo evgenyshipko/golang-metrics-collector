@@ -2,9 +2,10 @@ package files
 
 import (
 	"context"
+	"time"
+
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
-	"time"
 )
 
 func RecoverFromFile(filePath string, store storage.Storage, retryIntervals []time.Duration) {

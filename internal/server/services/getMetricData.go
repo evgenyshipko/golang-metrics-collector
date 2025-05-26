@@ -3,8 +3,9 @@ package services
 import (
 	"context"
 	"errors"
-	c "github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"net/http"
+
+	c "github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 )
 
 func (s *MetricService) GetMetricValue(ctx context.Context, metricData c.MetricData) (c.Values, int, error) {

@@ -1,9 +1,10 @@
 package tasks
 
 import (
+	"time"
+
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/types"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
-	"time"
 )
 
 func LogChanLength(ch chan types.MetricMessage) {

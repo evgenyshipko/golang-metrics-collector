@@ -2,6 +2,10 @@ package server
 
 import (
 	"context"
+	"net/http"
+	"net/http/pprof"
+	_ "net/http/pprof"
+
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/files"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/httpserver"
@@ -51,10 +55,33 @@ func Create(config *setup.ServerStartupValues, store storage.Storage) *CustomSer
 
 	router.Use(middlewares.ValidateSHA256(config.HashKey))
 
+	router.Mount("/debug/pprof", pprofHandler())
+
 	service := services.NewMetricService(store, config.StoreInterval, config.FileStoragePath)
 
 	server := NewCustomServer(router, store, config, service)
 	return server
+}
+
+func pprofHandler() http.Handler {
+	r := chi.NewRouter()
+
+	// Регистрируем все стандартные обработчики pprof
+	r.HandleFunc("/", pprof.Index)
+	r.HandleFunc("/cmdline", pprof.Cmdline)
+	r.HandleFunc("/profile", pprof.Profile)
+	r.HandleFunc("/symbol", pprof.Symbol)
+	r.HandleFunc("/trace", pprof.Trace)
+
+	// Для heap и других профилей
+	r.Handle("/goroutine", pprof.Handler("goroutine"))
+	r.Handle("/threadcreate", pprof.Handler("threadcreate"))
+	r.Handle("/heap", pprof.Handler("heap"))
+	r.Handle("/block", pprof.Handler("block"))
+	r.Handle("/mutex", pprof.Handler("mutex"))
+	r.Handle("/allocs", pprof.Handler("allocs"))
+
+	return r
 }
 
 func (s *CustomServer) Start() {

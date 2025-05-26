@@ -2,12 +2,13 @@ package tasks
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/types"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/mem"
-	"time"
 )
 
 func AdditionalMetricsGenerator(interval time.Duration, inputCh chan<- types.MetricMessage) {

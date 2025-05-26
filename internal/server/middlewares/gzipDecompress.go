@@ -2,8 +2,9 @@ package middlewares
 
 import (
 	"compress/gzip"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"net/http"
+
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 )
 
 func GzipDecompress(next http.Handler) http.Handler {

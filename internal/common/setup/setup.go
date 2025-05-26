@@ -3,11 +3,12 @@ package setup
 import (
 	"errors"
 	"fmt"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 )
 
 func GetInterval(envName string, flagVal *int, validate ...bool) (time.Duration, error) {
