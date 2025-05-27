@@ -28,13 +28,19 @@ goose -dir internal/server/db/migrations postgres "postgres://metrics:metrics@lo
 3. Run metrics collector (server)
 
 ```bash
-go run ./cmd/server -d="postgres://metrics:metrics@localhost:5433/metrics?sslmode=disable" -m=false
+go run -ldflags "
+    -X main.buildVersion=v1.0.0 \
+    -X main.buildDate=$(date +'%Y-%m-%d_%H:%M:%S') \
+    -X main.buildCommit=$(git rev-parse --short HEAD)" ./cmd/server -d="postgres://metrics:metrics@localhost:5433/metrics?sslmode=disable" -m=false
 ```
 
 4. Run agent (source of metric values)
 
 ```bash
-go run ./cmd/agent
+go run -ldflags "
+    -X main.buildVersion=v1.0.0 \
+    -X main.buildDate=$(date +'%Y-%m-%d_%H:%M:%S') \
+    -X main.buildCommit=$(git rev-parse --short HEAD)" ./cmd/agent
 ```
 
 ### Unit tests
