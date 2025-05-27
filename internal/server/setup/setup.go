@@ -1,4 +1,4 @@
-// Пакет с настройками запуска приложения.
+// setup - пакет с настройками запуска приложения. Приложение может брать переменные из флагов командной строки или из .env-файла.
 package setup
 
 import (
@@ -12,15 +12,15 @@ import (
 )
 
 type ServerStartupValues struct {
-	Host               string          `env:"ADDRESS"`              // Хост сервера.
-	StoreInterval      time.Duration   `env:"STORE_INTERVAL"`       // Интервал между сохранениями метрик в локальный файл.
-	FileStoragePath    string          `env:"FILE_STORAGE_PATH"`    // Путь к файлу, в котором сохраняются метрики.
-	Restore            bool            `env:"RESTORE"`              // Восстанавливать метрики из файла при запуске или нет.
-	DatabaseDSN        string          `env:"DATABASE_DSN"`         // Строка с данными доступа к базе PostgreSQL
-	RetryIntervals     []time.Duration `env:"RETRY_INTERVALS"`      // Интервалы между попытками записи в базу.
-	RequestWaitTimeout time.Duration   `env:"REQUEST_WAIT_TIMEOUT"` // Таймаут ожидания ответа хендлеров.
-	AutoMigrations     bool            `env:"AUTO_MIGRATIONS"`      // Запускать миграции при запуске приложения или нет.
-	HashKey            string          `env:"KEY"`                  // Секретный хеш (авторизация).
+	Host               string          `env:"ADDRESS"`              // Host определяет адрес и порт, на котором сервер будет слушать входящие соединения (флаг -a).
+	StoreInterval      time.Duration   `env:"STORE_INTERVAL"`       // Интервал времени между сохранениями метрик в локальный файл (флаг -i).
+	FileStoragePath    string          `env:"FILE_STORAGE_PATH"`    // Путь к файлу, в котором сохраняются метрики (флаг -f).
+	Restore            bool            `env:"RESTORE"`              // Восстанавливать метрики из файла при запуске или нет (флаг -r).
+	DatabaseDSN        string          `env:"DATABASE_DSN"`         // Строка с данными доступа к базе PostgreSQL (флаг -d).
+	RetryIntervals     []time.Duration `env:"RETRY_INTERVALS"`      // Интервалы между попытками записи в базу (флаг -ri).
+	RequestWaitTimeout time.Duration   `env:"REQUEST_WAIT_TIMEOUT"` // Таймаут ожидания ответа хендлеров (флаг -w).
+	AutoMigrations     bool            `env:"AUTO_MIGRATIONS"`      // Запускать миграции при запуске приложения или нет (флаг -m).
+	HashKey            string          `env:"KEY"`                  // Секретный хеш для авторизации (флаг -k).
 }
 
 func GetProjectRoot() string {
