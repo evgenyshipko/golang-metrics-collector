@@ -12,15 +12,16 @@ import (
 )
 
 type ServerStartupValues struct {
-	Host               string          `env:"ADDRESS"`              // Host определяет адрес и порт, на котором сервер будет слушать входящие соединения (флаг -a).
-	StoreInterval      time.Duration   `env:"STORE_INTERVAL"`       // Интервал времени между сохранениями метрик в локальный файл (флаг -i).
-	FileStoragePath    string          `env:"FILE_STORAGE_PATH"`    // Путь к файлу, в котором сохраняются метрики (флаг -f).
-	Restore            bool            `env:"RESTORE"`              // Восстанавливать метрики из файла при запуске или нет (флаг -r).
-	DatabaseDSN        string          `env:"DATABASE_DSN"`         // Строка с данными доступа к базе PostgreSQL (флаг -d).
-	RetryIntervals     []time.Duration `env:"RETRY_INTERVALS"`      // Интервалы между попытками записи в базу (флаг -ri).
-	RequestWaitTimeout time.Duration   `env:"REQUEST_WAIT_TIMEOUT"` // Таймаут ожидания ответа хендлеров (флаг -w).
-	AutoMigrations     bool            `env:"AUTO_MIGRATIONS"`      // Запускать миграции при запуске приложения или нет (флаг -m).
-	HashKey            string          `env:"KEY"`                  // Секретный хеш для авторизации (флаг -k).
+	Host                 string          `env:"ADDRESS"`              // Host определяет адрес и порт, на котором сервер будет слушать входящие соединения (флаг -a).
+	StoreInterval        time.Duration   `env:"STORE_INTERVAL"`       // Интервал времени между сохранениями метрик в локальный файл (флаг -i).
+	FileStoragePath      string          `env:"FILE_STORAGE_PATH"`    // Путь к файлу, в котором сохраняются метрики (флаг -f).
+	Restore              bool            `env:"RESTORE"`              // Восстанавливать метрики из файла при запуске или нет (флаг -r).
+	DatabaseDSN          string          `env:"DATABASE_DSN"`         // Строка с данными доступа к базе PostgreSQL (флаг -d).
+	RetryIntervals       []time.Duration `env:"RETRY_INTERVALS"`      // Интервалы между попытками записи в базу (флаг -ri).
+	RequestWaitTimeout   time.Duration   `env:"REQUEST_WAIT_TIMEOUT"` // Таймаут ожидания ответа хендлеров (флаг -w).
+	AutoMigrations       bool            `env:"AUTO_MIGRATIONS"`      // Запускать миграции при запуске приложения или нет (флаг -m).
+	HashKey              string          `env:"KEY"`                  // Секретный хеш для авторизации (флаг -k).
+	CryptoPrivateKeyPath string          `env:"CRYPTO_KEY"`           // Путь к секретному приватному ключу для расшифровки сообщений, подписанных публичным ключом шифрования (флаг -crypto-key)
 }
 
 func GetProjectRoot() string {
@@ -63,6 +64,8 @@ func GetStartupValues(args []string) (ServerStartupValues, error) {
 
 	flagHashKey := flagSet.String("k", "", "secret used to hash metrics")
 
+	cryptoPrivateKeyPath := flagSet.String("crypto-key", "", "path to public key to encrypt metrics")
+
 	// Парсим переданные аргументы
 	if err := flagSet.Parse(args); err != nil {
 		if err == flag.ErrHelp {
@@ -71,6 +74,8 @@ func GetStartupValues(args []string) (ServerStartupValues, error) {
 	}
 
 	var cfg ServerStartupValues
+
+	cfg.CryptoPrivateKeyPath = setup.GetStringVariable("CRYPTO_KEY", cryptoPrivateKeyPath)
 
 	cfg.HashKey = setup.GetStringVariable("KEY", flagHashKey)
 

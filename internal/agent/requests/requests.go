@@ -1,15 +1,12 @@
 package requests
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/processData"
 	"time"
 
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/converter"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/gzip"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/setup"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
@@ -32,9 +29,10 @@ var retryAfterFunc = func(retryIntervals []time.Duration) func(c *resty.Client, 
 }
 
 type Requester struct {
-	client  *resty.Client
-	hashKey string
-	host    string
+	client              *resty.Client
+	hashKey             string
+	host                string
+	cryptoPublicKeyPath string
 }
 
 func NewRequester(cfg setup.AgentStartupValues) *Requester {
@@ -49,9 +47,10 @@ func NewRequester(cfg setup.AgentStartupValues) *Requester {
 		})
 
 	return &Requester{
-		client:  restyClient,
-		hashKey: cfg.HashKey,
-		host:    cfg.Host,
+		client:              restyClient,
+		hashKey:             cfg.HashKey,
+		host:                cfg.Host,
+		cryptoPublicKeyPath: cfg.CryptoPublicKeyPath,
 	}
 }
 
@@ -83,28 +82,39 @@ func (r *Requester) sendPostRequest(url string, body []byte, headers map[string]
 		Post(url)
 }
 
-func (r *Requester) sendWithCompression(url string, data interface{}, headers map[string]string, hashKey string) (*resty.Response, error) {
+func (r *Requester) sendWithProcessedData(url string, data interface{}, headers map[string]string) (*resty.Response, error) {
 	body, err := json.Marshal(data)
 	if err != nil {
-		logger.Instance.Warnw("sendWithCompression", "json.Marshal err", err)
+		logger.Instance.Warnw("sendWithProcessedData", "json.Marshal err", err)
 		return &resty.Response{}, err
 	}
 
-	if hashKey != "" {
-		h := hmac.New(sha256.New, []byte(hashKey))
-		h.Write(body)
-		headers["HashSHA256"] = hex.EncodeToString(h.Sum(nil))
+	processors := []processData.DataProcessor{}
+
+	if r.hashKey != "" {
+		processors = append(processors, &processData.Sha256Processor{HashKey: r.hashKey})
 	}
 
-	headers["Content-Encoding"] = "gzip"
+	processors = append(processors, &processData.GZipProcessor{})
 
-	compressedBody, err := gzip.Compress(body)
+	if r.cryptoPublicKeyPath != "" {
+		processors = append(processors, &processData.EncryptBodyProcessor{CryptoPublicKeyPath: r.cryptoPublicKeyPath})
+	}
+
+	chainProcessor := &processData.ChainProcessor{
+		Processors: processors,
+	}
+
+	processedBody, headers, err := chainProcessor.Process(body, headers)
+
+	logger.Instance.Infow("sendWithProcessedData", "processedBody", processedBody, "headers", headers)
+
 	if err != nil {
-		logger.Instance.Warnw("sendWithCompressionAndRequestId", "compress err", err)
+		logger.Instance.Warnw("chainProcessor.Process", "process err", err)
 		return &resty.Response{}, err
 	}
 
-	return r.sendPostRequest(url, compressedBody, headers)
+	return r.sendPostRequest(url, processedBody, headers)
 }
 
 func (r *Requester) SendMetricBatch(data []consts.MetricData) error {
@@ -117,7 +127,7 @@ func (r *Requester) SendMetricBatch(data []consts.MetricData) error {
 
 	url := fmt.Sprintf("http://%s/updates/", r.host)
 
-	resp, err := r.sendWithCompression(url, data, headers, r.hashKey)
+	resp, err := r.sendWithProcessedData(url, data, headers)
 
 	if resp.StatusCode() == 200 {
 		logger.Instance.Info("Метрики успешно отправлены")
@@ -149,7 +159,7 @@ func (r *Requester) SendMetric(metricType consts.Metric, name string, value inte
 
 	url := fmt.Sprintf("http://%s/update/", r.host)
 
-	resp, err := r.sendWithCompression(url, requestData, headers, r.hashKey)
+	resp, err := r.sendWithProcessedData(url, requestData, headers)
 
 	if resp.StatusCode() == 200 {
 		logger.Instance.Info("Метрики успешно отправлены")

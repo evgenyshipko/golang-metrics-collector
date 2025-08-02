@@ -10,13 +10,14 @@ import (
 )
 
 type AgentStartupValues struct {
-	Host               string          `env:"ADDRESS"`
-	ReportInterval     time.Duration   `env:"REPORT_INTERVAL"`
-	PollInterval       time.Duration   `env:"POLL_INTERVAL"`
-	RetryIntervals     []time.Duration `env:"RETRY_INTERVALS"`
-	RequestWaitTimeout time.Duration   `env:"REQUEST_WAIT_TIMEOUT"`
-	HashKey            string          `env:"KEY"`
-	RateLimit          int             `env:"RATE_LIMIT"`
+	Host                string          `env:"ADDRESS"`
+	ReportInterval      time.Duration   `env:"REPORT_INTERVAL"`
+	PollInterval        time.Duration   `env:"POLL_INTERVAL"`
+	RetryIntervals      []time.Duration `env:"RETRY_INTERVALS"`
+	RequestWaitTimeout  time.Duration   `env:"REQUEST_WAIT_TIMEOUT"`
+	HashKey             string          `env:"KEY"`
+	RateLimit           int             `env:"RATE_LIMIT"`
+	CryptoPublicKeyPath string          `env:"CRYPTO_KEY"`
 }
 
 const (
@@ -42,6 +43,8 @@ func GetStartupValues(args []string) (AgentStartupValues, error) {
 
 	flagRateLimit := flagSet.Int("l", 3, "count of http-sender workers")
 
+	cryptoPublicKeyPath := flagSet.String("crypto-key", "", "path to public key to encrypt metrics")
+
 	// Парсим переданные аргументы
 	if err := flagSet.Parse(args); err != nil {
 		if err == flag.ErrHelp {
@@ -54,6 +57,8 @@ func GetStartupValues(args []string) (AgentStartupValues, error) {
 	cfg.HashKey = setup.GetStringVariable("KEY", flagHashKey)
 
 	cfg.Host = setup.GetStringVariable("ADDRESS", flagHost)
+
+	cfg.CryptoPublicKeyPath = setup.GetStringVariable("CRYPTO_KEY", cryptoPublicKeyPath)
 
 	pollInterval, err := setup.GetInterval("POLL_INTERVAL", flagPollInterval)
 	if err != nil {

@@ -46,6 +46,8 @@ func Create(config *setup.ServerStartupValues, store storage.Storage) *CustomSer
 
 	router.Use(middleware.RequestID)
 
+	router.Use(middlewares.DecryptMiddleware(config.CryptoPrivateKeyPath))
+
 	router.Use(middlewares.GzipDecompress)
 
 	router.Use(middlewares.GzipCompress)
