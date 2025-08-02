@@ -1,3 +1,4 @@
+// Пакет logger при старте программы инифиализирует логгер zap с кастомными настройками
 package logger
 
 import (
@@ -9,6 +10,8 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+// Instance - это глобальная переменная логгера, которую можно импортировать в разные части программы
+// и использвоать для логгирования : Instance.debug(...), Instance.info(...) и.т.д (подробнее в доке https://pkg.go.dev/go.uber.org/zap#SugaredLogger)
 var Instance *zap.SugaredLogger
 
 const (

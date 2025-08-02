@@ -12,7 +12,16 @@ import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 )
 
+var (
+	buildVersion = "N/A"
+	buildDate    = "N/A"
+	buildCommit  = "N/A"
+)
+
 func main() {
+
+	logger.Instance.Infof("\nBuild version: %s\nBuild date: %s\nBuild commit: %s\n", buildVersion, buildDate, buildCommit)
+
 	signalChan := make(chan os.Signal, 1)
 	dataCh := make(chan types.MetricMessage, 100)
 	errCh := make(chan error)

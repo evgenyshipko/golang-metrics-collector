@@ -28,13 +28,19 @@ goose -dir internal/server/db/migrations postgres "postgres://metrics:metrics@lo
 3. Run metrics collector (server)
 
 ```bash
-go run ./cmd/server -d="postgres://metrics:metrics@localhost:5433/metrics?sslmode=disable" -m=false
+go run -ldflags "
+    -X main.buildVersion=v1.0.0 \
+    -X main.buildDate=$(date +'%Y-%m-%d_%H:%M:%S') \
+    -X main.buildCommit=$(git rev-parse --short HEAD)" ./cmd/server -d="postgres://metrics:metrics@localhost:5433/metrics?sslmode=disable" -m=false
 ```
 
 4. Run agent (source of metric values)
 
 ```bash
-go run ./cmd/agent
+go run -ldflags "
+    -X main.buildVersion=v1.0.0 \
+    -X main.buildDate=$(date +'%Y-%m-%d_%H:%M:%S') \
+    -X main.buildCommit=$(git rev-parse --short HEAD)" ./cmd/agent
 ```
 
 ### Unit tests
@@ -43,3 +49,23 @@ To run unit test execute command:
 ```bash
 go test ./... -v
 ```
+
+### Run multichecker
+
+1. Build checker
+```bash
+go build -o staticlint cmd/staticlint/main.go
+```
+
+2. Run check
+```bash
+./staticlint ./...
+```
+
+### Open docs
+1. Run godoc
+```bash
+godoc -http=:8080
+```
+2. Open link in browser http://localhost:8080/pkg/?m=all
+
