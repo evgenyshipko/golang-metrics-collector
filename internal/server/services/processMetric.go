@@ -2,9 +2,9 @@ package services
 
 import (
 	"context"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/files"
 
 	c "github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/server/files"
 )
 
 func (s *MetricService) ProcessMetric(ctx context.Context, metricData c.MetricData) (c.MetricData, error) {

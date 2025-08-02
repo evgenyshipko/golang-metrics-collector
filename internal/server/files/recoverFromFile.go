@@ -2,6 +2,8 @@ package files
 
 import (
 	"context"
+	files2 "github.com/evgenyshipko/golang-metrics-collector/internal/common/files"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/retry"
 	"time"
 
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
@@ -20,4 +22,10 @@ func RecoverFromFile(filePath string, store storage.Storage, retryIntervals []ti
 		return
 	}
 	logger.Instance.Infof("Хранилище восстановлено из файла %s успешно", filePath)
+}
+
+func ReadFromFileWithRetry(fileName string, retryIntervals []time.Duration) (*storage.StorageData, error) {
+	return retry.WithRetry(func() (*storage.StorageData, error) {
+		return files2.ReadFromFile[storage.StorageData](fileName)
+	}, retryIntervals)
 }

@@ -1,12 +1,12 @@
 package main
 
 import (
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/files"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/server/files"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/server"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/setup"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
