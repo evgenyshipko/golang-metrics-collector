@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/processData"
+	"net"
 	"time"
 
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/converter"
@@ -33,6 +34,18 @@ type Requester struct {
 	hashKey             string
 	host                string
 	cryptoPublicKeyPath string
+	outboundIP          net.IP
+}
+
+func getOutboundIP() (net.IP, error) {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+	return localAddr.IP, nil
 }
 
 func NewRequester(cfg setup.AgentStartupValues) *Requester {
@@ -46,11 +59,18 @@ func NewRequester(cfg setup.AgentStartupValues) *Requester {
 			return err != nil // Повторяем только при сетевых ошибках
 		})
 
+	ip, err := getOutboundIP()
+	if err != nil {
+		logger.Instance.Warn("error when try to get outbound IP address", err)
+	}
+	logger.Instance.Infof("Outbound IP: %s", ip)
+
 	return &Requester{
 		client:              restyClient,
 		hashKey:             cfg.HashKey,
 		host:                cfg.Host,
 		cryptoPublicKeyPath: cfg.CryptoPublicKeyPath,
+		outboundIP:          ip,
 	}
 }
 
@@ -155,6 +175,10 @@ func (r *Requester) SendMetric(metricType consts.Metric, name string, value inte
 	headers := map[string]string{
 		"Content-Type": "application/json",
 		"x-request-id": requestID,
+	}
+
+	if r.outboundIP != nil {
+		headers["X-real-ip"] = r.outboundIP.String()
 	}
 
 	url := fmt.Sprintf("http://%s/update/", r.host)

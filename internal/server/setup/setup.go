@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/files"
+	"net"
 	"os"
 	"path/filepath"
 	"time"
@@ -25,6 +26,7 @@ type ServerStartupValues struct {
 	HashKey              string          `env:"KEY"`                                  // Секретный хеш для авторизации (флаг -k).
 	CryptoPrivateKeyPath string          `env:"CRYPTO_KEY" json:"crypto_key"`         // Путь к секретному приватному ключу для расшифровки сообщений, подписанных публичным ключом шифрования (флаг -crypto-key)
 	ConfigFilePath       string          `env:"CONFIG"`
+	TrustedSubnet        *net.IPNet      `env:"TRUSTED_SUBNET" json:"trusted_subnet"`
 }
 
 func GetProjectRoot() string {
@@ -46,6 +48,7 @@ const (
 	defaultHashKey              = ""
 	defaultCryptoPrivateKeyPath = ""
 	defaultConfigPath           = ""
+	defaultTrustedSubnet        = ""
 )
 
 // GetStartupValues берет переменные из флагов либо из переменных окружения. Если нет ни того, ни другого - то берет дефолтные значения.
@@ -78,6 +81,8 @@ func GetStartupValues(args []string) (ServerStartupValues, error) {
 	cryptoPrivateKeyPath := flagSet.String("crypto-key", defaultCryptoPrivateKeyPath, "path to public key to encrypt metrics")
 
 	flagConfigFilePath := flagSet.String("c", defaultConfigPath, "path to config file")
+
+	flagTrustedSubnet := flagSet.String("t", defaultTrustedSubnet, "trusted subnet")
 
 	// Парсим переданные аргументы
 	if err := flagSet.Parse(args); err != nil {
@@ -120,6 +125,21 @@ func GetStartupValues(args []string) (ServerStartupValues, error) {
 	cfg.RequestWaitTimeout = requestWaitTimeout
 
 	cfg.AutoMigrations = setup.GetBoolVariable("AUTO_MIGRATIONS", flagAutoMigrations)
+
+	trustedSubnetStr := setup.GetStringVariable("TRUSTED_SUBNET", flagTrustedSubnet)
+	if trustedSubnetStr == "" {
+		cfg.TrustedSubnet = nil
+	} else {
+		var err error
+		ip, trustedSubnet, err := net.ParseCIDR(trustedSubnetStr)
+		if err != nil {
+			logger.Instance.Warnf("invalid CIDR in TRUSTED_SUBNET: %v", err)
+			cfg.TrustedSubnet = nil
+		} else {
+			logger.Instance.Debugf("subnet variable: %s, ip: %s", trustedSubnetStr, ip)
+		}
+		cfg.TrustedSubnet = trustedSubnet
+	}
 
 	// читаем конфиг из json-файла, если он есть
 	cfg.ConfigFilePath = setup.GetStringVariable("CONFIG", flagConfigFilePath)
