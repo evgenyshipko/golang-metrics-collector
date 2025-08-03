@@ -1,6 +1,7 @@
 package tasks
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -11,7 +12,7 @@ import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 )
 
-func SendMetricsTask(cfg setup.AgentStartupValues, dataChan <-chan types.MetricMessage, errChan chan<- error) {
+func SendMetricsTask(ctx context.Context, cfg setup.AgentStartupValues, dataChan <-chan types.MetricMessage, errChan chan<- error) {
 	ticker := time.NewTicker(cfg.ReportInterval)
 
 	requester := requests.NewRequester(cfg)
@@ -20,35 +21,53 @@ func SendMetricsTask(cfg setup.AgentStartupValues, dataChan <-chan types.MetricM
 
 	for w := 1; w <= cfg.RateLimit; w++ {
 		wg.Add(1)
-		go worker(w, dataChan, errChan, requester, ticker, &wg)
+		go worker(ctx, w, dataChan, errChan, requester, ticker, &wg)
 	}
 
 	go func() {
-		wg.Wait()     // Ждём завершения всех горутин
+		<-ctx.Done()
+		logger.Instance.Debug("SendMetricsTask <-ctx.Done()")
 		ticker.Stop() // останавливаем тикер
 	}()
+
+	wg.Wait() // Ждём завершения всех горутин
 }
 
-func worker(id int, jobs <-chan types.MetricMessage, errChan chan<- error, requester *requests.Requester, ticker *time.Ticker, wg *sync.WaitGroup) {
+/*
+worker обрабатывает метрики с graceful shutdown при получении сигнала завершения.
+Все блокирующие операции защищены select с проверкой ctx.Done().
+*/
+func worker(ctx context.Context, id int, jobs <-chan types.MetricMessage, errChan chan<- error, requester *requests.Requester,
+	ticker *time.Ticker, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	fmt.Printf("Worker %d starting\n", id)
-	for range ticker.C {
-		fmt.Printf("Worker %d processing metrics...\n", id)
-		for job := range jobs {
-			if job.Err != nil {
-				logger.Instance.Warnw("Обработка ошибки", "error", job.Err)
-				continue
+	for {
+		select {
+		case <-ctx.Done(): // Получен сигнал завершения
+			return
+		case <-ticker.C:
+			select {
+			case job, ok := <-jobs:
+				if !ok { // Канал закрыт
+					return
+				}
+				if job.Err != nil {
+					logger.Instance.Warnw("Обработка ошибки", "error", job.Err)
+					continue
+				}
+
+				err := requester.SendMetric(job.Data.Type, job.Data.Name, job.Data.Value)
+				if err != nil {
+					select {
+					case errChan <- err:
+					case <-ctx.Done():
+						return
+					}
+				}
+			case <-ctx.Done():
+				return
 			}
-
-			logger.Instance.Infow("worker", "рабочий", id, "запущена задача", job)
-
-			err := requester.SendMetric(job.Data.Type, job.Data.Name, job.Data.Value)
-			if err != nil {
-				errChan <- err
-			}
-
-			logger.Instance.Infow("worker", "рабочий", id, "закончил задачy", job)
 		}
 	}
 }

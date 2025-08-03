@@ -4,8 +4,6 @@ import (
 	"bufio"
 	"encoding/json"
 	"os"
-
-	"github.com/evgenyshipko/golang-metrics-collector/internal/server/storage"
 )
 
 type Producer struct {
@@ -26,7 +24,7 @@ func NewTruncateProducer(filename string) (*Producer, error) {
 	}, nil
 }
 
-func (p *Producer) WriteData(event *storage.StorageData) error {
+func WriteData[T any](p *Producer, event *T) error {
 	data, err := json.Marshal(&event)
 	if err != nil {
 		return err
@@ -65,15 +63,15 @@ func NewConsumer(filename string) (*Consumer, error) {
 	}, nil
 }
 
-func (c *Consumer) ReadData() (*storage.StorageData, error) {
+func ReadData[T any](consumer *Consumer) (*T, error) {
 	// читаем данные до символа переноса строки
-	data, err := c.reader.ReadBytes('\n')
+	data, err := consumer.reader.ReadBytes('\n')
 	if err != nil {
 		return nil, err
 	}
 
 	// преобразуем данные из JSON-представления в структуру
-	event := storage.StorageData{}
+	var event T
 	err = json.Unmarshal(data, &event)
 	if err != nil {
 		return nil, err

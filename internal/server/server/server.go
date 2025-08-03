@@ -2,11 +2,11 @@ package server
 
 import (
 	"context"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/files"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/profiling"
 	_ "net/http/pprof"
 
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
-	"github.com/evgenyshipko/golang-metrics-collector/internal/server/files"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/httpserver"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/middlewares/logging"
@@ -45,6 +45,8 @@ func Create(config *setup.ServerStartupValues, store storage.Storage) *CustomSer
 	router := chi.NewRouter()
 
 	router.Use(middleware.RequestID)
+
+	router.Use(middlewares.DecryptMiddleware(config.CryptoPrivateKeyPath))
 
 	router.Use(middlewares.GzipDecompress)
 

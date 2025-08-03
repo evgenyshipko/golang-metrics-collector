@@ -1,6 +1,7 @@
 package tasks
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -11,55 +12,99 @@ import (
 	"github.com/shirou/gopsutil/mem"
 )
 
-func AdditionalMetricsGenerator(interval time.Duration, inputCh chan<- types.MetricMessage) {
+/*
+Ключевые особенности реализации:
+1 Контроль контекста в нескольких точках:
+- Перед началом сбора метрик
+-Перед каждой отправкой в канал
+-В начале каждой итерации цикла
+
+2 Неблокирующая отправка метрик:
+-Все операции отправки в канал защищены select с проверкой ctx.Done()
+-Гарантирует быструю реакцию на сигнал завершения
+*/
+
+func AdditionalMetricsGenerator(ctx context.Context, interval time.Duration, inputCh chan<- types.MetricMessage) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		memory, err := mem.VirtualMemory()
-		if err != nil {
-			inputCh <- types.MetricMessage{
-				Data: types.MetricValue{},
-				Err:  err,
+	for {
+		select {
+		case <-ctx.Done(): // Получен сигнал завершения
+			return
+		case <-ticker.C:
+			if ctx.Err() != nil {
+				return
 			}
-		} else {
-			inputCh <- types.MetricMessage{
-				Data: types.MetricValue{
-					Type:  consts.GAUGE,
-					Value: memory.Total,
-					Name:  "TotalMemory",
-				},
-				Err: nil,
-			}
-			inputCh <- types.MetricMessage{
-				Data: types.MetricValue{
-					Type:  consts.GAUGE,
-					Value: memory.Free,
-					Name:  "FreeMemory",
-				},
-				Err: nil,
-			}
-		}
 
-		cpuPercent, err := cpu.Percent(interval, true)
-		if err != nil {
-			logger.Instance.Warnf("Ошибка при получении загрузки CPU: %v\n", err)
-			inputCh <- types.MetricMessage{
-				Data: types.MetricValue{},
-				Err:  err,
+			memory, err := mem.VirtualMemory()
+			if err != nil {
+				select {
+				case <-ctx.Done():
+					return
+				case inputCh <- types.MetricMessage{
+					Data: types.MetricValue{},
+					Err:  err,
+				}:
+				}
+				continue
 			}
-		} else {
+
+			memMetrics := []types.MetricMessage{
+				{
+					Data: types.MetricValue{
+						Type:  consts.GAUGE,
+						Value: memory.Total,
+						Name:  "TotalMemory",
+					},
+					Err: nil,
+				},
+				{
+					Data: types.MetricValue{
+						Type:  consts.GAUGE,
+						Value: memory.Free,
+						Name:  "FreeMemory",
+					},
+					Err: nil,
+				},
+			}
+
+			for _, metric := range memMetrics {
+				select {
+				case <-ctx.Done():
+					return
+				case inputCh <- metric:
+				}
+			}
+
+			cpuPercent, err := cpu.Percent(interval, true)
+			if err != nil {
+				logger.Instance.Warnf("Ошибка при получении загрузки CPU: %v\n", err)
+				select {
+				case <-ctx.Done():
+					return
+				case inputCh <- types.MetricMessage{
+					Data: types.MetricValue{},
+					Err:  err,
+				}:
+				}
+				continue
+			}
+
 			for index, value := range cpuPercent {
-				inputCh <- types.MetricMessage{
+				select {
+				case <-ctx.Done():
+					return
+				case inputCh <- types.MetricMessage{
 					Data: types.MetricValue{
 						Type:  consts.GAUGE,
 						Value: value,
 						Name:  fmt.Sprintf("CPUutilization%d", index+1),
 					},
 					Err: nil,
+				}:
 				}
 			}
-
 		}
 	}
 }
