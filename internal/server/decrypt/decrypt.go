@@ -6,11 +6,11 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
+	"os"
 )
 
 func LoadPrivateKey(path string) (*rsa.PrivateKey, error) {
-	keyData, err := ioutil.ReadFile(path)
+	keyData, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read key file: %v", err)
 	}

@@ -6,11 +6,11 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
+	"os"
 )
 
 func LoadPublicKey(path string) (*rsa.PublicKey, error) {
-	keyData, err := ioutil.ReadFile(path)
+	keyData, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
