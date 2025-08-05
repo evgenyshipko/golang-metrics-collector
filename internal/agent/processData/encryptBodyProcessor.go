@@ -11,6 +11,10 @@ type EncryptBodyProcessor struct {
 
 func (p *EncryptBodyProcessor) Process(data []byte, headers map[string]string) ([]byte, map[string]string, error) {
 
+	if p.CryptoPublicKeyPath == "" {
+		return data, headers, nil
+	}
+
 	publicKey, err := encrypt.LoadPublicKey(p.CryptoPublicKeyPath)
 	if err != nil {
 		logger.Instance.Warnf("Failed to load public key: %v", err)

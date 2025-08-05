@@ -109,16 +109,11 @@ func (r *Requester) sendWithProcessedData(url string, data interface{}, headers 
 		return &resty.Response{}, err
 	}
 
-	processors := []processData.DataProcessor{}
-
-	if r.hashKey != "" {
-		processors = append(processors, &processData.Sha256Processor{HashKey: r.hashKey})
-	}
-
-	processors = append(processors, &processData.GZipProcessor{})
-
-	if r.cryptoPublicKeyPath != "" {
-		processors = append(processors, &processData.EncryptBodyProcessor{CryptoPublicKeyPath: r.cryptoPublicKeyPath})
+	processors := []processData.DataProcessor{
+		&processData.Sha256Processor{HashKey: r.hashKey},
+		&processData.XRealIpProcessor{OutboundIP: r.outboundIP},
+		&processData.GZipProcessor{},
+		&processData.EncryptBodyProcessor{CryptoPublicKeyPath: r.cryptoPublicKeyPath},
 	}
 
 	chainProcessor := &processData.ChainProcessor{
