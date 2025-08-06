@@ -69,7 +69,7 @@ func main() {
 
 	go customServer.Start()
 
-	go grpcServer.StartGrpcServer(metricService)
+	go grpcServer.StartGrpcServer(metricService, values)
 
 	go tasks.WriteMetricsToFileTask(values.StoreInterval, values.FileStoragePath, customServer)
 

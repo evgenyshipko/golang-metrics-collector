@@ -24,7 +24,7 @@ type AgentStartupValues struct {
 }
 
 const (
-	defaultReportIntervalSeconds = 10
+	defaultReportIntervalSeconds = 5
 	defaultPollIntervalSeconds   = 2
 	defaultRequestWaitTimeout    = 10
 	defaultHostAddress           = "localhost:8080"

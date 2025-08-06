@@ -5,7 +5,9 @@ import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	pb "github.com/evgenyshipko/golang-metrics-collector/internal/common/grpc"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/interceptors"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/services"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/setup"
 	"google.golang.org/grpc"
 	_ "google.golang.org/grpc/encoding/gzip"
 	"net"
@@ -34,7 +36,7 @@ func (s *MetricsServer) UpdateMetric(ctx context.Context, in *pb.Metric) (*pb.Me
 			Delta: &delta,
 		}
 	}
-	
+
 	_, err := s.service.ProcessMetric(ctx, *metricData)
 	if err != nil {
 		logger.Instance.Warnf("Ошибка записи метрик через grpc-метод: %v", err)
@@ -49,7 +51,7 @@ func (s *MetricsServer) UpdateMetric(ctx context.Context, in *pb.Metric) (*pb.Me
 	}, nil
 }
 
-func StartGrpcServer(metricService services.Service) {
+func StartGrpcServer(metricService services.Service, cfg setup.ServerStartupValues) {
 	// определяем порт для сервера
 	listen, err := net.Listen("tcp", ":3200")
 	if err != nil {
@@ -57,7 +59,7 @@ func StartGrpcServer(metricService services.Service) {
 		return
 	}
 	// создаём gRPC-сервер без зарегистрированной службы
-	s := grpc.NewServer()
+	s := grpc.NewServer(grpc.UnaryInterceptor(interceptors.Sha256ServerInterceptor(cfg)))
 	// регистрируем сервис
 	pb.RegisterMetricsServiceServer(s, &MetricsServer{service: metricService})
 

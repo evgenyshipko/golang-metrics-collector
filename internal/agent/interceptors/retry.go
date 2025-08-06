@@ -33,6 +33,9 @@ func RetryInterceptor(cfg setup.AgentStartupValues) func(ctx context.Context,
 		defer cancel()
 
 		for i := 0; i < maxRetries; i++ {
+
+			logger.Instance.Infof("Request to %s: %v", method, req)
+
 			err = invoker(ctx, method, req, reply, cc, opts...)
 			if err == nil {
 				return nil
