@@ -2,6 +2,7 @@ package requests
 
 import (
 	"context"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/interceptors"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/setup"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	pb "github.com/evgenyshipko/golang-metrics-collector/internal/common/grpc"
@@ -10,17 +11,17 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/encoding/gzip"
 	"log"
+	"time"
 )
 
 type GrpcRequester struct {
 	connection *grpc.ClientConn
+	timeout    time.Duration
 }
 
 func (r *GrpcRequester) SendMetric(metric consts.MetricData) error {
 
 	client := pb.NewMetricsServiceClient(r.connection)
-
-	ctx := context.Background()
 
 	var metricDataPb *pb.Metric
 
@@ -40,7 +41,7 @@ func (r *GrpcRequester) SendMetric(metric consts.MetricData) error {
 		}
 	}
 
-	resp, err := client.UpdateMetric(ctx, metricDataPb)
+	resp, err := client.UpdateMetric(context.Background(), metricDataPb)
 
 	if err != nil {
 		logger.Instance.Warnf("Ошибка grpc-метода: %s", err.Error())
@@ -51,8 +52,12 @@ func (r *GrpcRequester) SendMetric(metric consts.MetricData) error {
 	return nil
 }
 
-func NewGrpcRequester(_ setup.AgentStartupValues) *GrpcRequester {
-	conn, err := grpc.Dial(":3200", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithDefaultCallOptions(grpc.UseCompressor(gzip.Name)))
+func NewGrpcRequester(cfg setup.AgentStartupValues) *GrpcRequester {
+	conn, err := grpc.Dial(":3200",
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDefaultCallOptions(grpc.UseCompressor(gzip.Name)),
+		grpc.WithUnaryInterceptor(interceptors.RetryInterceptor(cfg)),
+	)
 	if err != nil {
 		log.Fatal(err)
 	}

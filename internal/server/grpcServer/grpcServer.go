@@ -3,13 +3,12 @@ package grpcServer
 import (
 	"context"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
+	pb "github.com/evgenyshipko/golang-metrics-collector/internal/common/grpc"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/services"
 	"google.golang.org/grpc"
 	_ "google.golang.org/grpc/encoding/gzip"
 	"net"
-
-	pb "github.com/evgenyshipko/golang-metrics-collector/internal/common/grpc"
 )
 
 type MetricsServer struct {
@@ -35,7 +34,7 @@ func (s *MetricsServer) UpdateMetric(ctx context.Context, in *pb.Metric) (*pb.Me
 			Delta: &delta,
 		}
 	}
-
+	
 	_, err := s.service.ProcessMetric(ctx, *metricData)
 	if err != nil {
 		logger.Instance.Warnf("Ошибка записи метрик через grpc-метод: %v", err)
