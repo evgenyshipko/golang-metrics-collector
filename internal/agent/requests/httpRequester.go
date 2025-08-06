@@ -7,7 +7,6 @@ import (
 	"net"
 	"time"
 
-	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/converter"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/setup"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
@@ -29,8 +28,8 @@ var retryAfterFunc = func(retryIntervals []time.Duration) func(c *resty.Client, 
 	}
 }
 
-type Requester struct {
-	client              *resty.Client
+type HttpRequester struct {
+	httpClient          *resty.Client
 	hashKey             string
 	host                string
 	cryptoPublicKeyPath string
@@ -48,7 +47,7 @@ func getOutboundIP() (net.IP, error) {
 	return localAddr.IP, nil
 }
 
-func NewRequester(cfg setup.AgentStartupValues) *Requester {
+func NewHttpRequester(cfg setup.AgentStartupValues) *HttpRequester {
 	var restyClient = resty.New().
 		SetRetryCount(len(cfg.RetryIntervals)).
 		SetTimeout(cfg.RequestWaitTimeout).
@@ -65,8 +64,8 @@ func NewRequester(cfg setup.AgentStartupValues) *Requester {
 	}
 	logger.Instance.Infof("Outbound IP: %s", ip)
 
-	return &Requester{
-		client:              restyClient,
+	return &HttpRequester{
+		httpClient:          restyClient,
 		hashKey:             cfg.HashKey,
 		host:                cfg.Host,
 		cryptoPublicKeyPath: cfg.CryptoPublicKeyPath,
@@ -94,15 +93,15 @@ func maxRetryDuration(retryIntervals []time.Duration) time.Duration {
 	return maximum
 }
 
-func (r *Requester) sendPostRequest(url string, body []byte, headers map[string]string) (*resty.Response, error) {
+func (r *HttpRequester) sendPostRequest(url string, body []byte, headers map[string]string) (*resty.Response, error) {
 	//ЗАПОМНИТЬ: resty автоматически добавляет заголовок "Accept-Encoding", "gzip" и распаковывает ответ если он пришел в gzip
-	return r.client.R().
+	return r.httpClient.R().
 		SetBody(body).
 		SetHeaders(headers).
 		Post(url)
 }
 
-func (r *Requester) sendWithProcessedData(url string, data interface{}, headers map[string]string) (*resty.Response, error) {
+func (r *HttpRequester) sendWithProcessedData(url string, data interface{}, headers map[string]string) (*resty.Response, error) {
 	body, err := json.Marshal(data)
 	if err != nil {
 		logger.Instance.Warnw("sendWithProcessedData", "json.Marshal err", err)
@@ -132,7 +131,7 @@ func (r *Requester) sendWithProcessedData(url string, data interface{}, headers 
 	return r.sendPostRequest(url, processedBody, headers)
 }
 
-func (r *Requester) SendMetricBatch(data []consts.MetricData) error {
+func (r *HttpRequester) SendMetricBatch(data []consts.MetricData) error {
 	requestID := uuid.New().String()
 
 	headers := map[string]string{
@@ -158,13 +157,7 @@ func (r *Requester) SendMetricBatch(data []consts.MetricData) error {
 	return nil
 }
 
-func (r *Requester) SendMetric(metricType consts.Metric, name string, value interface{}) error {
-	requestData, err := converter.GenerateMetricData(metricType, name, value)
-	if err != nil {
-		logger.Instance.Warnw("SendMetric", "GenerateMetricData", err)
-		return err
-	}
-
+func (r *HttpRequester) SendMetric(metric consts.MetricData) error {
 	requestID := uuid.New().String()
 
 	headers := map[string]string{
@@ -172,13 +165,9 @@ func (r *Requester) SendMetric(metricType consts.Metric, name string, value inte
 		"x-request-id": requestID,
 	}
 
-	if r.outboundIP != nil {
-		headers["X-real-ip"] = r.outboundIP.String()
-	}
-
 	url := fmt.Sprintf("http://%s/update/", r.host)
 
-	resp, err := r.sendWithProcessedData(url, requestData, headers)
+	resp, err := r.sendWithProcessedData(url, metric, headers)
 
 	if resp.StatusCode() == 200 {
 		logger.Instance.Info("Метрики успешно отправлены")
@@ -192,5 +181,9 @@ func (r *Requester) SendMetric(metricType consts.Metric, name string, value inte
 
 	logger.Instance.Infow("SendMetric Response", "requestID", requestID, "url", url, "status", resp.Status(), "body", respBody)
 
+	return nil
+}
+
+func (r *HttpRequester) Close() error {
 	return nil
 }

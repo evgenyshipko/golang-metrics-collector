@@ -20,6 +20,7 @@ type AgentStartupValues struct {
 	RateLimit           int             `env:"RATE_LIMIT"`
 	CryptoPublicKeyPath string          `env:"CRYPTO_KEY" json:"crypto_key"`
 	ConfigFilePath      string          `env:"CONFIG"`
+	Protocol            string          `env:"PROTOCOL"`
 }
 
 const (
@@ -32,6 +33,7 @@ const (
 	defaultRateLimit             = 3
 	defaultCryptoPublicKeyPath   = ""
 	defaultConfigPath            = ""
+	defaultProtocol              = "grpc"
 )
 
 func GetStartupValues(args []string) (AgentStartupValues, error) {
@@ -55,6 +57,8 @@ func GetStartupValues(args []string) (AgentStartupValues, error) {
 
 	flagConfigFilePath := flagSet.String("c", defaultConfigPath, "path to config file")
 
+	flagProtocol := flagSet.String("pr", defaultProtocol, "http or grpc protocol")
+
 	// Парсим переданные аргументы
 	if err := flagSet.Parse(args); err != nil {
 		if err == flag.ErrHelp {
@@ -63,6 +67,8 @@ func GetStartupValues(args []string) (AgentStartupValues, error) {
 	}
 
 	var cfg AgentStartupValues
+
+	cfg.Protocol = setup.GetStringVariable("PROTOCOL", flagProtocol)
 
 	cfg.HashKey = setup.GetStringVariable("KEY", flagHashKey)
 

@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package metrics;
+
+option go_package = "golang-metrics-collector/internal/common/grpc";
+
+service MetricsService {
+  rpc UpdateMetric (Metric) returns (MetricResponse);
+}
+
+message Metric {
+  string id = 1;          // имя метрики
+  MetricType type = 2;    // тип метрики
+  oneof value {
+    int64 delta = 3;    // значение для counter
+    double val = 4;     // значение для gauge
+  }
+}
+
+enum MetricType {
+  GAUGE = 0;
+  COUNTER = 1;
+}
+
+message MetricResponse {
+  bool success = 1;
+  string message = 2;
+}

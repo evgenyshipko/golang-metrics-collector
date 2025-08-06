@@ -41,7 +41,7 @@ func (s *CustomServer) GetStoreData() (*storage.StorageData, error) {
 	return s.store.GetAll(context.Background())
 }
 
-func Create(config *setup.ServerStartupValues, store storage.Storage) *CustomServer {
+func Create(config *setup.ServerStartupValues, store storage.Storage, service services.Service) *CustomServer {
 	router := chi.NewRouter()
 
 	router.Use(middleware.RequestID)
@@ -59,8 +59,6 @@ func Create(config *setup.ServerStartupValues, store storage.Storage) *CustomSer
 	router.Use(middlewares.ValidateSHA256(config.HashKey))
 
 	router.Mount("/debug/pprof", profiling.PprofHandlers())
-
-	service := services.NewMetricService(store, config.StoreInterval, config.FileStoragePath)
 
 	server := NewCustomServer(router, store, config, service)
 	return server

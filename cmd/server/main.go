@@ -2,6 +2,8 @@ package main
 
 import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/files"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/grpcServer"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/services"
 	"os"
 	"os/signal"
 	"syscall"
@@ -38,7 +40,9 @@ func main() {
 		files.RecoverFromFile(values.FileStoragePath, store, values.RetryIntervals)
 	}
 
-	customServer := server.Create(&values, store)
+	metricService := services.NewMetricService(store, values.StoreInterval, values.FileStoragePath)
+
+	customServer := server.Create(&values, store, metricService)
 
 	// через этот канал сообщим основному потоку, что соединения закрыты
 	idleConnsClosed := make(chan struct{})
@@ -64,6 +68,8 @@ func main() {
 	}()
 
 	go customServer.Start()
+
+	go grpcServer.StartGrpcServer(metricService)
 
 	go tasks.WriteMetricsToFileTask(values.StoreInterval, values.FileStoragePath, customServer)
 
