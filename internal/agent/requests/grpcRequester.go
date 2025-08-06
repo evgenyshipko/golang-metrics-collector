@@ -8,6 +8,7 @@ import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/encoding/gzip"
 	"log"
 )
 
@@ -51,7 +52,7 @@ func (r *GrpcRequester) SendMetric(metric consts.MetricData) error {
 }
 
 func NewGrpcRequester(_ setup.AgentStartupValues) *GrpcRequester {
-	conn, err := grpc.Dial(":3200", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(":3200", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithDefaultCallOptions(grpc.UseCompressor(gzip.Name)))
 	if err != nil {
 		log.Fatal(err)
 	}

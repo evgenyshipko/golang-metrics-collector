@@ -6,7 +6,7 @@ import (
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/services"
 	"google.golang.org/grpc"
-	"log"
+	_ "google.golang.org/grpc/encoding/gzip"
 	"net"
 
 	pb "github.com/evgenyshipko/golang-metrics-collector/internal/common/grpc"
@@ -54,7 +54,8 @@ func StartGrpcServer(metricService services.Service) {
 	// определяем порт для сервера
 	listen, err := net.Listen("tcp", ":3200")
 	if err != nil {
-		log.Fatal(err)
+		logger.Instance.Error(err)
+		return
 	}
 	// создаём gRPC-сервер без зарегистрированной службы
 	s := grpc.NewServer()
@@ -64,6 +65,7 @@ func StartGrpcServer(metricService services.Service) {
 	logger.Instance.Info("Сервер gRPC начал работу")
 	// получаем запрос gRPC
 	if err := s.Serve(listen); err != nil {
-		log.Fatal(err)
+		logger.Instance.Error(err)
+		return
 	}
 }
