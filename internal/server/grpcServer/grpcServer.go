@@ -59,7 +59,7 @@ func StartGrpcServer(metricService services.Service, cfg setup.ServerStartupValu
 		return
 	}
 	// создаём gRPC-сервер без зарегистрированной службы
-	s := grpc.NewServer(grpc.UnaryInterceptor(interceptors.Sha256ServerInterceptor(cfg)))
+	s := grpc.NewServer(grpc.ChainUnaryInterceptor(interceptors.Sha256(cfg), interceptors.TrustedIp(cfg)))
 	// регистрируем сервис
 	pb.RegisterMetricsServiceServer(s, &MetricsServer{service: metricService})
 

@@ -56,7 +56,7 @@ func NewGrpcRequester(cfg setup.AgentStartupValues) *GrpcRequester {
 	conn, err := grpc.Dial(":3200",
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithDefaultCallOptions(grpc.UseCompressor(gzip.Name)),
-		grpc.WithChainUnaryInterceptor(interceptors.RetryInterceptor(cfg), interceptors.Sha256Interceptor(cfg)),
+		grpc.WithChainUnaryInterceptor(interceptors.RetryInterceptor(cfg), interceptors.Sha256Interceptor(cfg), interceptors.XRealIpInterceptor(cfg)),
 	)
 	if err != nil {
 		log.Fatal(err)

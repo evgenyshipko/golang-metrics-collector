@@ -37,3 +37,4 @@ type Values struct {
 }
 
 const HashSha256Header = "HashSHA256"
+const XRealIpHeader = "X-real-ip"

@@ -2,9 +2,9 @@ package interceptors
 
 import (
 	"context"
+	sha256utils "github.com/evgenyshipko/golang-metrics-collector/internal/common/commonUtils"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
-	sha256utils "github.com/evgenyshipko/golang-metrics-collector/internal/common/utils"
 	setup2 "github.com/evgenyshipko/golang-metrics-collector/internal/server/setup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -13,7 +13,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func Sha256ServerInterceptor(cfg setup2.ServerStartupValues) func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+func Sha256(cfg setup2.ServerStartupValues) func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 
 		token := ""

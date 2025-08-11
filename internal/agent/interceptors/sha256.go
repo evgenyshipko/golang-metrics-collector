@@ -3,9 +3,9 @@ package interceptors
 import (
 	"context"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/setup"
+	sha256utils "github.com/evgenyshipko/golang-metrics-collector/internal/common/commonUtils"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
-	sha256utils "github.com/evgenyshipko/golang-metrics-collector/internal/common/utils"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/proto"

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/processData"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/commonUtils"
 	"net"
 	"time"
 
@@ -36,17 +37,6 @@ type HttpRequester struct {
 	outboundIP          net.IP
 }
 
-func getOutboundIP() (net.IP, error) {
-	conn, err := net.Dial("udp", "8.8.8.8:80")
-	if err != nil {
-		return nil, err
-	}
-	defer conn.Close()
-
-	localAddr := conn.LocalAddr().(*net.UDPAddr)
-	return localAddr.IP, nil
-}
-
 func NewHttpRequester(cfg setup.AgentStartupValues) *HttpRequester {
 	var restyClient = resty.New().
 		SetRetryCount(len(cfg.RetryIntervals)).
@@ -58,7 +48,7 @@ func NewHttpRequester(cfg setup.AgentStartupValues) *HttpRequester {
 			return err != nil // Повторяем только при сетевых ошибках
 		})
 
-	ip, err := getOutboundIP()
+	ip, err := commonUtils.GetOutboundIP()
 	if err != nil {
 		logger.Instance.Warn("error when try to get outbound IP address", err)
 	}

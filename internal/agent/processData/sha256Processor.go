@@ -1,8 +1,8 @@
 package processData
 
 import (
+	sha256utils "github.com/evgenyshipko/golang-metrics-collector/internal/common/commonUtils"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
-	sha256utils "github.com/evgenyshipko/golang-metrics-collector/internal/common/utils"
 )
 
 type Sha256Processor struct {

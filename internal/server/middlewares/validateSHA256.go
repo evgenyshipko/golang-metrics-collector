@@ -1,8 +1,8 @@
 package middlewares
 
 import (
+	sha256utils "github.com/evgenyshipko/golang-metrics-collector/internal/common/commonUtils"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
-	sha256utils "github.com/evgenyshipko/golang-metrics-collector/internal/common/utils"
 	"net/http"
 
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"

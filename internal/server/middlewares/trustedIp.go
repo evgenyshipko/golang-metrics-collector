@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"net"
 	"net/http"
@@ -17,7 +18,7 @@ func TrustedIpMiddleware(trustedSubnet *net.IPNet) func(next http.Handler) http.
 
 			logger.Instance.Info("МИДЛВАРА ТРАСТЕД РАБОТАЕТ")
 
-			ipStr := r.Header.Get("X-Real-IP")
+			ipStr := r.Header.Get(consts.XRealIpHeader)
 			if ipStr == "" {
 				http.Error(w, "X-Real-IP header is required", http.StatusForbidden)
 				return

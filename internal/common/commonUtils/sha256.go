@@ -1,4 +1,4 @@
-package sha256utils
+package commonUtils
 
 import (
 	"crypto/hmac"

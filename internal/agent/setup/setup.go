@@ -3,7 +3,9 @@ package setup
 import (
 	"flag"
 	"fmt"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/commonUtils"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/files"
+	"net"
 	"time"
 
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
@@ -21,6 +23,7 @@ type AgentStartupValues struct {
 	CryptoPublicKeyPath string          `env:"CRYPTO_KEY" json:"crypto_key"`
 	ConfigFilePath      string          `env:"CONFIG"`
 	Protocol            string          `env:"PROTOCOL"`
+	OutboundIp          *net.IP
 }
 
 const (
@@ -108,7 +111,13 @@ func GetStartupValues(args []string) (AgentStartupValues, error) {
 
 	cfg.RateLimit = rateLimit
 
-	logger.Instance.Infow("GetStartupValues", "Параметры запуска:", cfg)
+	ip, err := commonUtils.GetOutboundIP()
+	if err != nil {
+		logger.Instance.Warn("error when try to get outbound IP address", err)
+		cfg.OutboundIp = nil
+	}
+	cfg.OutboundIp = &ip
+	logger.Instance.Infof("Outbound IP: %s", ip)
 
 	// читаем конфиг из json-файла, если он есть
 	cfg.ConfigFilePath = setup.GetStringVariable("CONFIG", flagConfigFilePath)
@@ -132,6 +141,8 @@ func GetStartupValues(args []string) (AgentStartupValues, error) {
 			cfg.CryptoPublicKeyPath = configData.CryptoPublicKeyPath
 		}
 	}
+
+	logger.Instance.Infow("GetStartupValues", "Параметры запуска:", cfg)
 
 	return cfg, nil
 }
