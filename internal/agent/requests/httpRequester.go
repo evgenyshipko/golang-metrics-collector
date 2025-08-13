@@ -21,7 +21,7 @@ var retryAfterFunc = func(retryIntervals []time.Duration) func(c *resty.Client, 
 		attempt := r.Request.Attempt
 
 		if attempt <= len(retryIntervals) {
-			logger.Instance.Info(fmt.Sprintf("Попытка %d, ждем %v перед следующим запросом...\n", attempt, retryIntervals[attempt-1]))
+			logger.Instance.Infof("Попытка %d, ждем %v перед следующим запросом...\n", attempt, retryIntervals[attempt-1])
 			return retryIntervals[attempt-1], nil
 		}
 

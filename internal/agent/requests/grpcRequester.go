@@ -2,6 +2,7 @@ package requests
 
 import (
 	"context"
+	"errors"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/interceptors"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/setup"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
@@ -27,18 +28,21 @@ func (r *GrpcRequester) SendMetric(metric consts.MetricData) error {
 
 	logger.Instance.Infow("Sending metric", "metric", metric)
 
-	if metric.MType == consts.GAUGE {
+	switch metric.MType {
+	case consts.GAUGE:
 		metricDataPb = &pb.Metric{
 			Id:    metric.ID,
 			Type:  pb.MetricType_GAUGE,
 			Value: &pb.Metric_Val{Val: *metric.Value},
 		}
-	} else if metric.MType == consts.COUNTER {
+	case consts.COUNTER:
 		metricDataPb = &pb.Metric{
 			Id:    metric.ID,
 			Type:  pb.MetricType_COUNTER,
 			Value: &pb.Metric_Delta{Delta: *metric.Delta},
 		}
+	default:
+		return errors.New("invalid metric type, should be gauge or counter")
 	}
 
 	resp, err := client.UpdateMetric(context.Background(), metricDataPb)
@@ -53,7 +57,7 @@ func (r *GrpcRequester) SendMetric(metric consts.MetricData) error {
 }
 
 func NewGrpcRequester(cfg setup.AgentStartupValues) *GrpcRequester {
-	conn, err := grpc.Dial(":3200",
+	conn, err := grpc.NewClient(cfg.Host,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithDefaultCallOptions(grpc.UseCompressor(gzip.Name)),
 		grpc.WithChainUnaryInterceptor(interceptors.RetryInterceptor(cfg), interceptors.Sha256Interceptor(cfg), interceptors.XRealIpInterceptor(cfg)),

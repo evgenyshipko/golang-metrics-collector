@@ -2,7 +2,6 @@ package interceptors
 
 import (
 	"context"
-	"fmt"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/setup"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
 	"google.golang.org/grpc"
@@ -40,7 +39,7 @@ func RetryInterceptor(cfg setup.AgentStartupValues) func(ctx context.Context,
 			if err == nil {
 				return nil
 			}
-			logger.Instance.Info(fmt.Sprintf("Попытка %d, ждем %v перед следующим запросом...\n", i, cfg.RetryIntervals[i]))
+			logger.Instance.Infof("Попытка %d, ждем %v перед следующим запросом...\n", i, cfg.RetryIntervals[i])
 
 			// Проверяем, стоит ли повторять
 			if status.Code(err) != codes.Unavailable {

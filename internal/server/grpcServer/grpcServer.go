@@ -2,6 +2,7 @@ package grpcServer
 
 import (
 	"context"
+	"errors"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	pb "github.com/evgenyshipko/golang-metrics-collector/internal/common/grpc"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
@@ -18,23 +19,31 @@ type MetricsServer struct {
 	service services.Service
 }
 
+type GrpcServer struct {
+	Address string
+	Server  *grpc.Server
+}
+
 func (s *MetricsServer) UpdateMetric(ctx context.Context, in *pb.Metric) (*pb.MetricResponse, error) {
 
 	var metricData *consts.MetricData
-	if in.Type == pb.MetricType_GAUGE {
+	switch in.Type {
+	case pb.MetricType_GAUGE:
 		value := in.GetVal()
 		metricData = &consts.MetricData{
 			ID:    in.Id,
 			MType: consts.GAUGE,
 			Value: &value,
 		}
-	} else if in.Type == pb.MetricType_COUNTER {
+	case pb.MetricType_COUNTER:
 		delta := in.GetDelta()
 		metricData = &consts.MetricData{
 			ID:    in.Id,
 			MType: consts.COUNTER,
 			Delta: &delta,
 		}
+	default:
+		return nil, errors.New("metric type not should be gauge or counter")
 	}
 
 	_, err := s.service.ProcessMetric(ctx, *metricData)
@@ -51,22 +60,22 @@ func (s *MetricsServer) UpdateMetric(ctx context.Context, in *pb.Metric) (*pb.Me
 	}, nil
 }
 
-func StartGrpcServer(metricService services.Service, cfg setup.ServerStartupValues) {
-	// определяем порт для сервера
-	listen, err := net.Listen("tcp", ":3200")
-	if err != nil {
-		logger.Instance.Error(err)
-		return
-	}
-	// создаём gRPC-сервер без зарегистрированной службы
-	s := grpc.NewServer(grpc.ChainUnaryInterceptor(interceptors.Sha256(cfg), interceptors.TrustedIp(cfg)))
+func CreateGrpcServer(metricService services.Service, cfg setup.ServerStartupValues) *GrpcServer {
+	server := grpc.NewServer(grpc.ChainUnaryInterceptor(interceptors.Sha256(cfg), interceptors.TrustedIp(cfg)))
 	// регистрируем сервис
-	pb.RegisterMetricsServiceServer(s, &MetricsServer{service: metricService})
+	pb.RegisterMetricsServiceServer(server, &MetricsServer{service: metricService})
+	return &GrpcServer{Address: cfg.Host, Server: server}
+}
 
-	logger.Instance.Info("Сервер gRPC начал работу")
-	// получаем запрос gRPC
-	if err := s.Serve(listen); err != nil {
-		logger.Instance.Error(err)
-		return
+func (s *GrpcServer) Start() error {
+	listen, err := net.Listen("tcp", s.Address)
+	if err != nil {
+		return err
 	}
+	return s.Server.Serve(listen)
+}
+
+func (s *GrpcServer) Stop() error {
+	s.Server.GracefulStop()
+	return nil
 }

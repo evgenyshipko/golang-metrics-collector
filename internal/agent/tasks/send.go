@@ -51,40 +51,35 @@ func worker(ctx context.Context, id int, jobs <-chan types.MetricMessage, errCha
 			return
 		case <-ticker.C:
 			for {
-				select {
-				case job, ok := <-jobs:
-					if !ok { // Канал закрыт
-						logger.Instance.Debugf("jobs channel closed\n")
+				job, ok := <-jobs
+				if !ok { // Канал закрыт
+					logger.Instance.Debugf("jobs channel closed\n")
+					return
+				}
+				if job.Err != nil {
+					errChan <- job.Err
+					logger.Instance.Warnw("Обработка ошибки", "error", job.Err)
+					continue
+				}
+
+				requestData, err := converter.GenerateMetricData(job.Data.Type, job.Data.Name, job.Data.Value)
+				if err != nil {
+					select {
+					case errChan <- err:
+					case <-ctx.Done():
+						logger.Instance.Debugf("Worker %d exiting 2\n", id)
 						return
 					}
-					if job.Err != nil {
-						errChan <- job.Err
-						logger.Instance.Warnw("Обработка ошибки", "error", job.Err)
-						continue
-					}
+				}
 
-					requestData, err := converter.GenerateMetricData(job.Data.Type, job.Data.Name, job.Data.Value)
-					if err != nil {
-						select {
-						case errChan <- err:
-						case <-ctx.Done():
-							logger.Instance.Debugf("Worker %d exiting 2\n", id)
-							return
-						}
+				err = requester.SendMetric(requestData)
+				if err != nil {
+					select {
+					case errChan <- err:
+					case <-ctx.Done():
+						logger.Instance.Debugf("Worker %d exiting 3\n", id)
+						return
 					}
-
-					err = requester.SendMetric(requestData)
-					if err != nil {
-						select {
-						case errChan <- err:
-						case <-ctx.Done():
-							logger.Instance.Debugf("Worker %d exiting 3\n", id)
-							return
-						}
-					}
-				case <-ctx.Done():
-					logger.Instance.Debugf("Worker %d exiting 4\n", id)
-					return
 				}
 			}
 		}

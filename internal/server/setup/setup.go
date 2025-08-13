@@ -27,6 +27,7 @@ type ServerStartupValues struct {
 	CryptoPrivateKeyPath string          `env:"CRYPTO_KEY" json:"crypto_key"`         // Путь к секретному приватному ключу для расшифровки сообщений, подписанных публичным ключом шифрования (флаг -crypto-key)
 	ConfigFilePath       string          `env:"CONFIG"`
 	TrustedSubnet        *net.IPNet      `env:"TRUSTED_SUBNET" json:"trusted_subnet"`
+	Protocol             string          `env:"PROTOCOL"`
 }
 
 func GetProjectRoot() string {
@@ -49,6 +50,7 @@ const (
 	defaultCryptoPrivateKeyPath = ""
 	defaultConfigPath           = ""
 	defaultTrustedSubnet        = ""
+	defaultProtocol             = "grpc"
 )
 
 // GetStartupValues берет переменные из флагов либо из переменных окружения. Если нет ни того, ни другого - то берет дефолтные значения.
@@ -84,6 +86,8 @@ func GetStartupValues(args []string) (ServerStartupValues, error) {
 
 	flagTrustedSubnet := flagSet.String("t", defaultTrustedSubnet, "trusted subnet")
 
+	flagProtocol := flagSet.String("pr", defaultProtocol, "http or grpc protocol")
+
 	// Парсим переданные аргументы
 	if err := flagSet.Parse(args); err != nil {
 		if err == flag.ErrHelp {
@@ -92,6 +96,8 @@ func GetStartupValues(args []string) (ServerStartupValues, error) {
 	}
 
 	var cfg ServerStartupValues
+
+	cfg.Protocol = setup.GetStringVariable("PROTOCOL", flagProtocol)
 
 	cfg.CryptoPrivateKeyPath = setup.GetStringVariable("CRYPTO_KEY", cryptoPrivateKeyPath)
 
