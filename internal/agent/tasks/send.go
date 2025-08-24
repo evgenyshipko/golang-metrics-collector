@@ -3,6 +3,7 @@ package tasks
 import (
 	"context"
 	"fmt"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/agent/converter"
 	"sync"
 	"time"
 
@@ -28,6 +29,7 @@ func SendMetricsTask(ctx context.Context, cfg setup.AgentStartupValues, dataChan
 		<-ctx.Done()
 		logger.Instance.Debug("SendMetricsTask <-ctx.Done()")
 		ticker.Stop() // останавливаем тикер
+		requester.Close()
 	}()
 
 	wg.Wait() // Ждём завершения всех горутин
@@ -37,7 +39,7 @@ func SendMetricsTask(ctx context.Context, cfg setup.AgentStartupValues, dataChan
 worker обрабатывает метрики с graceful shutdown при получении сигнала завершения.
 Все блокирующие операции защищены select с проверкой ctx.Done().
 */
-func worker(ctx context.Context, id int, jobs <-chan types.MetricMessage, errChan chan<- error, requester *requests.Requester,
+func worker(ctx context.Context, id int, jobs <-chan types.MetricMessage, errChan chan<- error, requester requests.Requester,
 	ticker *time.Ticker, wg *sync.WaitGroup) {
 	defer wg.Done()
 
@@ -45,28 +47,40 @@ func worker(ctx context.Context, id int, jobs <-chan types.MetricMessage, errCha
 	for {
 		select {
 		case <-ctx.Done(): // Получен сигнал завершения
+			logger.Instance.Debugf("Worker %d exiting 1\n", id)
 			return
 		case <-ticker.C:
-			select {
-			case job, ok := <-jobs:
+			for {
+				job, ok := <-jobs
 				if !ok { // Канал закрыт
+					logger.Instance.Debugf("jobs channel closed\n")
 					return
 				}
 				if job.Err != nil {
+					errChan <- job.Err
 					logger.Instance.Warnw("Обработка ошибки", "error", job.Err)
 					continue
 				}
 
-				err := requester.SendMetric(job.Data.Type, job.Data.Name, job.Data.Value)
+				requestData, err := converter.GenerateMetricData(job.Data.Type, job.Data.Name, job.Data.Value)
 				if err != nil {
 					select {
 					case errChan <- err:
 					case <-ctx.Done():
+						logger.Instance.Debugf("Worker %d exiting 2\n", id)
 						return
 					}
 				}
-			case <-ctx.Done():
-				return
+
+				err = requester.SendMetric(requestData)
+				if err != nil {
+					select {
+					case errChan <- err:
+					case <-ctx.Done():
+						logger.Instance.Debugf("Worker %d exiting 3\n", id)
+						return
+					}
+				}
 			}
 		}
 	}

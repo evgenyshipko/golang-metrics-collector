@@ -1,9 +1,8 @@
 package middlewares
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
+	sha256utils "github.com/evgenyshipko/golang-metrics-collector/internal/common/commonUtils"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 	"net/http"
 
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
@@ -14,7 +13,7 @@ func ValidateSHA256(hashKey string) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-			hashFromHeader := r.Header.Get(`HashSHA256`)
+			hashFromHeader := r.Header.Get(consts.HashSha256Header)
 
 			var hashPointer *string
 
@@ -27,9 +26,7 @@ func ValidateSHA256(hashKey string) func(next http.Handler) http.Handler {
 					return
 				}
 
-				h := hmac.New(sha256.New, []byte(hashKey))
-				h.Write([]byte(requestBody))
-				hash := hex.EncodeToString(h.Sum(nil))
+				hash := sha256utils.GetHashedString(hashKey, []byte(requestBody))
 
 				if hashFromHeader != hash {
 					logger.Instance.Warnw("Хеши не совпадают", "hashFromHeader", hashFromHeader, "hash", hash)
@@ -43,7 +40,7 @@ func ValidateSHA256(hashKey string) func(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 
 			if hashPointer != nil {
-				w.Header().Set("HashSHA256", *hashPointer)
+				w.Header().Set(consts.HashSha256Header, *hashPointer)
 				logger.Instance.Infow("ValidateSHA256", "Requiest Headers", w.Header())
 			}
 		})

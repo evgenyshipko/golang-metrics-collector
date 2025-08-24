@@ -35,3 +35,6 @@ type Values struct {
 	Counter *int64   `json:"counter,omitempty"`
 	Gauge   *float64 `json:"gauge,omitempty"`
 }
+
+const HashSha256Header = "HashSHA256"
+const XRealIpHeader = "X-real-ip"

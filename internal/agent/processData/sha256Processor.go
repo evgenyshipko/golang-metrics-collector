@@ -1,9 +1,8 @@
 package processData
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
+	sha256utils "github.com/evgenyshipko/golang-metrics-collector/internal/common/commonUtils"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/consts"
 )
 
 type Sha256Processor struct {
@@ -12,9 +11,11 @@ type Sha256Processor struct {
 
 func (p *Sha256Processor) Process(data []byte, headers map[string]string) ([]byte, map[string]string, error) {
 
-	h := hmac.New(sha256.New, []byte(p.HashKey))
-	h.Write(data)
-	headers["HashSHA256"] = hex.EncodeToString(h.Sum(nil))
+	if p.HashKey == "" {
+		return data, headers, nil
+	}
+
+	headers[consts.HashSha256Header] = sha256utils.GetHashedString(p.HashKey, data)
 
 	return data, headers, nil
 }

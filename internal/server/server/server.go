@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/files"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/server/grpcServer"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/server/profiling"
 	_ "net/http/pprof"
 
@@ -17,17 +18,32 @@ import (
 	"github.com/go-chi/chi/middleware"
 )
 
+type Server interface {
+	Start() error
+	Stop() error
+}
+
+func CreateServer(router *chi.Mux, config *setup.ServerStartupValues, service services.Service) Server {
+	switch config.Protocol {
+	case "http":
+		return httpserver.NewHTTPServer(config.Host, router)
+	default:
+		return grpcServer.CreateGrpcServer(service, *config)
+	}
+}
+
 type CustomServer struct {
-	server  *httpserver.HTTPServer
+	server  Server
 	router  *chi.Mux
 	store   storage.Storage
 	config  *setup.ServerStartupValues
 	service services.Service
 }
 
-func NewCustomServer(router *chi.Mux, store storage.Storage, config *setup.ServerStartupValues, service services.Service) *CustomServer {
+func NewCustomServer(router *chi.Mux, store storage.Storage, config *setup.ServerStartupValues) *CustomServer {
+	service := services.NewMetricService(store, config.StoreInterval, config.FileStoragePath)
 	s := &CustomServer{
-		server:  httpserver.NewHTTPServer(config.Host, router),
+		server:  CreateServer(router, config, service),
 		router:  router,
 		store:   store,
 		config:  config,
@@ -46,6 +62,8 @@ func Create(config *setup.ServerStartupValues, store storage.Storage) *CustomSer
 
 	router.Use(middleware.RequestID)
 
+	router.Use(middlewares.TrustedIpMiddleware(config.TrustedSubnet))
+
 	router.Use(middlewares.DecryptMiddleware(config.CryptoPrivateKeyPath))
 
 	router.Use(middlewares.GzipDecompress)
@@ -58,9 +76,7 @@ func Create(config *setup.ServerStartupValues, store storage.Storage) *CustomSer
 
 	router.Mount("/debug/pprof", profiling.PprofHandlers())
 
-	service := services.NewMetricService(store, config.StoreInterval, config.FileStoragePath)
-
-	server := NewCustomServer(router, store, config, service)
+	server := NewCustomServer(router, store, config)
 	return server
 }
 

@@ -3,7 +3,9 @@ package setup
 import (
 	"flag"
 	"fmt"
+	"github.com/evgenyshipko/golang-metrics-collector/internal/common/commonUtils"
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/files"
+	"net"
 	"time"
 
 	"github.com/evgenyshipko/golang-metrics-collector/internal/common/logger"
@@ -20,10 +22,12 @@ type AgentStartupValues struct {
 	RateLimit           int             `env:"RATE_LIMIT"`
 	CryptoPublicKeyPath string          `env:"CRYPTO_KEY" json:"crypto_key"`
 	ConfigFilePath      string          `env:"CONFIG"`
+	Protocol            string          `env:"PROTOCOL"`
+	OutboundIp          *net.IP
 }
 
 const (
-	defaultReportIntervalSeconds = 10
+	defaultReportIntervalSeconds = 5
 	defaultPollIntervalSeconds   = 2
 	defaultRequestWaitTimeout    = 10
 	defaultHostAddress           = "localhost:8080"
@@ -32,6 +36,7 @@ const (
 	defaultRateLimit             = 3
 	defaultCryptoPublicKeyPath   = ""
 	defaultConfigPath            = ""
+	defaultProtocol              = "grpc"
 )
 
 func GetStartupValues(args []string) (AgentStartupValues, error) {
@@ -55,6 +60,8 @@ func GetStartupValues(args []string) (AgentStartupValues, error) {
 
 	flagConfigFilePath := flagSet.String("c", defaultConfigPath, "path to config file")
 
+	flagProtocol := flagSet.String("pr", defaultProtocol, "http or grpc protocol")
+
 	// Парсим переданные аргументы
 	if err := flagSet.Parse(args); err != nil {
 		if err == flag.ErrHelp {
@@ -63,6 +70,8 @@ func GetStartupValues(args []string) (AgentStartupValues, error) {
 	}
 
 	var cfg AgentStartupValues
+
+	cfg.Protocol = setup.GetStringVariable("PROTOCOL", flagProtocol)
 
 	cfg.HashKey = setup.GetStringVariable("KEY", flagHashKey)
 
@@ -102,7 +111,13 @@ func GetStartupValues(args []string) (AgentStartupValues, error) {
 
 	cfg.RateLimit = rateLimit
 
-	logger.Instance.Infow("GetStartupValues", "Параметры запуска:", cfg)
+	ip, err := commonUtils.GetOutboundIP()
+	if err != nil {
+		logger.Instance.Warn("error when try to get outbound IP address", err)
+		cfg.OutboundIp = nil
+	}
+	cfg.OutboundIp = &ip
+	logger.Instance.Infof("Outbound IP: %s", ip)
 
 	// читаем конфиг из json-файла, если он есть
 	cfg.ConfigFilePath = setup.GetStringVariable("CONFIG", flagConfigFilePath)
@@ -126,6 +141,8 @@ func GetStartupValues(args []string) (AgentStartupValues, error) {
 			cfg.CryptoPublicKeyPath = configData.CryptoPublicKeyPath
 		}
 	}
+
+	logger.Instance.Infow("GetStartupValues", "Параметры запуска:", cfg)
 
 	return cfg, nil
 }
